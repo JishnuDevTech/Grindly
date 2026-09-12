@@ -22,10 +22,10 @@ export default function Home({ user, quests, activeQuestId, onStart, onComplete,
   const completeQuest = async (questId) => {
     const quest = quests.find((item) => item.id === questId);
     if (!quest) return;
-    const accepted = await onComplete(questId);
-    if (accepted) {
-      setCelebration(quest);
-      window.setTimeout(() => setCelebration(null), 1300);
+    const result = await onComplete(questId);
+    if (result) {
+      setCelebration({ quest, reward: result.reward, user: result.user });
+      window.setTimeout(() => setCelebration(null), 2600);
     }
   };
 
@@ -52,7 +52,7 @@ export default function Home({ user, quests, activeQuestId, onStart, onComplete,
     <main className="mx-auto max-w-6xl px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section>
-          <div className="flex flex-wrap items-end justify-between gap-4"><div><div className="flex items-center gap-2"><span className="status-dot" /><p className="eyebrow">Your daily board</p></div><h2 className="mt-2 font-display text-2xl font-extrabold">Today's quests <span className="ml-1 text-muted">({incompleteQuests.length})</span></h2></div><button onClick={() => setShowBuilder((value) => !value)} className="btn-primary flex items-center gap-2"><Plus size={16} /> New quest</button></div>
+          <div className="flex flex-wrap items-end justify-between gap-4"><div><div className="flex items-center gap-2"><span className="status-dot" /><p className="eyebrow text-lime">Quest log · one active slot</p></div><h2 className="mt-2 font-display text-2xl font-extrabold">Available quests <span className="ml-1 text-muted">({incompleteQuests.length})</span></h2></div><button onClick={() => setShowBuilder((value) => !value)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Create quest</button></div>
           <div className="mt-5 flex items-center gap-2 overflow-x-auto pb-1">{categories.map((category) => <button key={category} onClick={() => setFilter(category)} className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition ${filter === category ? 'border-lime/40 bg-lime/10 text-lime-soft' : 'border-white/10 bg-white/[.03] text-muted hover:bg-white/[.07]'}`}>{category}</button>)}</div>
           <AnimatePresence>{showBuilder && <QuestBuilder draft={questDraft} setDraft={setQuestDraft} onSubmit={submitQuest} onCancel={() => setShowBuilder(false)} />}</AnimatePresence>
           <div className="mt-5 space-y-3">{incompleteQuests.length ? incompleteQuests.map((quest, index) => <QuestCard key={quest.id} quest={quest} blocked={Boolean(activeQuestId && activeQuestId !== quest.id)} onStart={onStart} onComplete={completeQuest} index={index} />) : <EmptyQuests onCreate={() => setShowBuilder(true)} />}</div>
@@ -66,7 +66,7 @@ export default function Home({ user, quests, activeQuestId, onStart, onComplete,
         </aside>
       </div>
     </main>
-    <AnimatePresence>{celebration && <CompletionAnimation quest={celebration} />}</AnimatePresence>
+    <AnimatePresence>{celebration && <CompletionAnimation quest={celebration.quest} reward={celebration.reward} user={celebration.user} />}</AnimatePresence>
   </div>;
 }
 

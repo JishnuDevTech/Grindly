@@ -123,7 +123,7 @@ export default function App() {
       showToast(`Quest cleared. +${result.reward.xp} XP · +${result.reward.coins} coins.`);
       const nextLeaderboard = await api.getLeaderboard(token);
       setLeaderboard(nextLeaderboard);
-      return true;
+      return result;
     } catch (error) {
       const remaining = error.payload?.remainingSeconds;
       showToast(remaining ? `Keep going. ${Math.ceil(remaining / 60)} minutes remain on this quest.` : error.message, 'warning');
