@@ -23,15 +23,22 @@ def firebase_ready() -> bool:
         return False
     if firebase_admin._apps:
         return True
-    service_account = credentials.Certificate(json.loads(service_account_json))
-    firebase_admin.initialize_app(service_account)
-    return True
+    try:
+        service_account = credentials.Certificate(json.loads(service_account_json))
+        firebase_admin.initialize_app(service_account)
+        return True
+    except (ValueError, TypeError, json.JSONDecodeError, base64.binascii.Error) as error:
+        raise RuntimeError("Firebase Admin credentials are malformed. Set FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 to the base64-encoded service-account JSON.") from error
 
 
 def current_identity(credentials_header: HTTPAuthorizationCredentials | None = Depends(bearer)) -> dict:
     if not credentials_header:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="A Firebase ID token is required")
-    if not firebase_ready():
+    try:
+        configured = firebase_ready()
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    if not configured:
         if settings.environment == "development" and credentials_header.credentials == "dev-token":
             return {"uid": "local-development-user", "email": "dev@grindly.local", "name": "Local Grinder"}
         raise HTTPException(status_code=503, detail="Firebase verification is not configured")
