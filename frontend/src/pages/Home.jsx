@@ -37,11 +37,12 @@ export default function Home({ user, quests, activeQuestId, onStart, onComplete,
     setShowBuilder(false);
   };
 
+  const todayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date());
   return <div className="min-h-screen bg-ink">
     <header className="border-b border-white/8 bg-ink/75 px-5 py-5 backdrop-blur-xl sm:px-8 lg:px-12 lg:py-7">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-start justify-between gap-4">
-          <div><p className="eyebrow">Saturday · January 20, 2024</p><h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Make today <span className="text-lime">count.</span></h1><p className="mt-2 text-sm text-muted">Good to see you, {user.displayName.split(' ')[0]}. Your next win is waiting.</p></div>
+          <div><p className="eyebrow">{todayLabel}</p><h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Make today <span className="text-lime">count.</span></h1><p className="mt-2 text-sm text-muted">Good to see you, {user.displayName.split(' ')[0]}. Your next win is waiting.</p></div>
           <div className="flex items-center gap-3"><button onClick={onOpenAssistant} className="hidden items-center gap-2 rounded-xl border border-lime/25 bg-lime/8 px-3 py-2 text-xs font-bold text-lime-soft transition hover:bg-lime/15 sm:flex"><Bot size={15} /> Ask Grindly</button><Avatar avatar={user.avatar} size="md" /></div>
         </div>
         <div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4"><StatCard label="Available coins" value={user.coins} icon="Coins" variant="blue" detail="Spend in the Vault" /><StatCard label="Current level" value={user.level} icon="Sparkles" variant="primary" detail="Top 12% this week" /><StatCard label="Day streak" value={user.streak} icon="Flame" variant="accent" suffix=" days" detail="Keep it alive" /><StatCard label="Global rank" value={`#${user.globalRank}`} icon="Trophy" variant="success" detail="+18 places this week" /></div>

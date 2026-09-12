@@ -161,7 +161,8 @@ def get_me(user: User = Depends(current_user), database: Session = Depends(get_d
     payload["completedQuestCount"] = completed
     payload["categoryCounts"] = {category: count for category, count in category_rows}
     payload["activity"] = [
-        {"id": item.id, "title": item.title, "detail": item.detail, "time": item.created_at.isoformat() + "Z", "icon": item.kind}
+        {"id": item.id, "title": item.title, "detail": item.detail, "time": item.created_at.isoformat() + "Z",
+         "createdAt": item.created_at.isoformat() + "Z", "date": item.created_at.date().isoformat(), "icon": item.kind}
         for item in database.scalars(select(Activity).where(Activity.user_id == user.id).order_by(Activity.created_at.desc()).limit(10))
     ]
     payload["achievements"] = []
