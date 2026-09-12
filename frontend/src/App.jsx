@@ -14,6 +14,7 @@ import Progression from './pages/Progression';
 import SettingsPage from './pages/Settings';
 import Achievements from './pages/Achievements';
 import { GrindlyCharacter } from './components/GrindlyCharacter';
+import { Avatar } from './components/Avatar';
 import { shopCatalog } from './data/mockData';
 
 const navItems = [
@@ -180,6 +181,18 @@ export default function App() {
       setPreferences(result.preferences || {});
     } catch (error) { showToast(error.message, 'warning'); }
   };
+  const handleAvatarChange = async (avatar) => {
+    const previous = user.avatar;
+    setUser((current) => ({ ...current, avatar }));
+    try {
+      const nextUser = await api.updateMe({ display_name: user.displayName, username: user.username, avatar }, token);
+      setUser(nextUser);
+      showToast('Avatar identity saved.');
+    } catch (error) {
+      setUser((current) => ({ ...current, avatar: previous }));
+      showToast(error.message, 'warning');
+    }
+  };
   const markNotificationRead = async (id) => {
     try {
       await api.markNotificationRead(id, token);
@@ -208,14 +221,14 @@ export default function App() {
     profile: <Profile user={user} activity={user.activity || []} inventory={inventory} />,
     progression: <Progression user={user} />,
     achievements: <Achievements user={user} />,
-    settings: <SettingsPage theme={theme} onThemeChange={updateTheme} preferences={preferences} onPreferencesChange={handlePreferences} onSignOut={() => signOut(firebaseAuth)} />,
+    settings: <SettingsPage user={user} theme={theme} onThemeChange={updateTheme} preferences={preferences} onPreferencesChange={handlePreferences} onAvatarChange={handleAvatarChange} onSignOut={() => signOut(firebaseAuth)} />,
     shop: <Shop user={user} items={shopItems} inventory={inventory} onPurchase={handlePurchase} onEquip={handleEquip} />,
     leaderboard: <Leaderboard user={user} entries={leaderboard} friendEntries={friendLeaderboard} getToken={token} friends={friends} friendRequests={friendRequests} onFriendsChange={setFriends} onRequestsChange={setFriendRequests} onFriendLeaderboardChange={setFriendLeaderboard} />,
   }[currentPage];
 
   const lightTheme = theme === 'light' || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: light)').matches);
   const reducedMotion = preferences.animations === false;
-  return <div className={`min-h-screen text-white ${lightTheme ? 'light-theme' : ''} ${reducedMotion ? 'reduce-motion' : ''}`}><div className="app-noise" /><div className="relative mx-auto flex min-h-screen max-w-[1600px]"><aside className="hidden w-24 shrink-0 flex-col items-center border-r border-white/10 bg-ink/80 py-7 lg:flex"><button onClick={() => setCurrentPage('home')} className="brand-mark" aria-label="Go to today's quests">G</button><div className="mt-12 flex flex-col gap-3">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`nav-rail-button ${currentPage === id ? 'nav-rail-button-active' : ''}`} title={label}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>)}</div><button className="mt-auto nav-rail-button" onClick={() => signOut(firebaseAuth)} title="Sign out"><LogOut size={19} strokeWidth={1.8} /><span>Sign out</span></button></aside><main className="min-w-0 flex-1 pb-24 lg:pb-0"><AnimatePresence mode="wait"><motion.div key={currentPage} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .22 }}>{page}</motion.div></AnimatePresence></main></div><NotificationCenter notifications={notifications} onRead={markNotificationRead} onReadAll={markAllNotificationsRead} /><CompanionPeek onOpen={() => setAssistantOpen(true)} /><nav className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/10 bg-ink/90 px-3 py-2 backdrop-blur-xl lg:hidden"><div className="mx-auto flex min-w-max max-w-lg items-center justify-around gap-2">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`mobile-nav-button ${currentPage === id ? 'mobile-nav-button-active' : ''}`}><Icon size={18} /><span>{label}</span></button>)}</div></nav><AnimatePresence>{assistantOpen && <CompanionPanel context={aiContext} onAction={async (action, input) => api.runAIAction(action, input, token)} user={user} quests={quests} onClose={() => setAssistantOpen(false)} />} {toast && <Toast toast={toast} />}</AnimatePresence></div>;
+  return <div className={`min-h-screen text-white ${lightTheme ? 'light-theme' : ''} ${reducedMotion ? 'reduce-motion' : ''}`}><div className="app-noise" /><div className="relative mx-auto flex min-h-screen max-w-[1600px]"><aside className="hidden w-24 shrink-0 flex-col items-center border-r border-white/10 bg-ink/80 py-7 lg:flex"><button onClick={() => setCurrentPage('home')} className="brand-mark" aria-label="Go to today's quests">G</button><button onClick={() => setCurrentPage('profile')} className="mt-4 rounded-2xl" aria-label="Open your profile"><Avatar avatar={user.avatar} size="sm" /></button><div className="mt-8 flex flex-col gap-3">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`nav-rail-button ${currentPage === id ? 'nav-rail-button-active' : ''}`} title={label}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>)}</div><button className="mt-auto nav-rail-button" onClick={() => signOut(firebaseAuth)} title="Sign out"><LogOut size={19} strokeWidth={1.8} /><span>Sign out</span></button></aside><main className="min-w-0 flex-1 pb-24 lg:pb-0"><AnimatePresence mode="wait"><motion.div key={currentPage} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .22 }}>{page}</motion.div></AnimatePresence></main></div><NotificationCenter notifications={notifications} onRead={markNotificationRead} onReadAll={markAllNotificationsRead} /><CompanionPeek onOpen={() => setAssistantOpen(true)} /><nav className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/10 bg-ink/90 px-3 py-2 backdrop-blur-xl lg:hidden"><div className="mx-auto flex min-w-max max-w-lg items-center justify-around gap-2">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`mobile-nav-button ${currentPage === id ? 'mobile-nav-button-active' : ''}`}><Icon size={18} /><span>{label}</span></button>)}</div></nav><AnimatePresence>{assistantOpen && <CompanionPanel context={aiContext} onAction={async (action, input) => api.runAIAction(action, input, token)} user={user} quests={quests} onClose={() => setAssistantOpen(false)} />} {toast && <Toast toast={toast} />}</AnimatePresence></div>;
 }
 
 function LoadingScreen({ message }) { return <div className="grid min-h-screen place-items-center bg-ink"><div className="text-center"><span className="brand-mark mx-auto">G</span><p className="mt-5 text-sm text-muted">{message}</p></div></div>; }

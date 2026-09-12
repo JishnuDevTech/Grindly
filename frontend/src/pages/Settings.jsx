@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Bell, Check, ChevronRight, Eye, FileText, Moon, Palette, Shield, Sun, UserRound, Volume2, Zap } from 'lucide-react';
+import { avatarOptions } from '../data/mockData';
+import { Avatar } from '../components/Avatar';
 
 const preferenceGroups = [
   { title: 'Experience', rows: [{ id: 'animations', label: 'Animations', detail: 'Reward reveals and character motion', icon: Zap }, { id: 'sound', label: 'Sound effects', detail: 'Gameplay and reward feedback', icon: Volume2 }] },
@@ -7,7 +9,7 @@ const preferenceGroups = [
   { title: 'Privacy', rows: [{ id: 'profile_visibility', label: 'Profile visibility', detail: 'Control who can inspect your character', icon: Eye, select: true }, { id: 'activity_visibility', label: 'Activity visibility', detail: 'Control who can see your activity field', icon: Eye, select: true }] },
 ];
 
-export default function SettingsPage({ theme, onThemeChange, preferences = {}, onPreferencesChange, onSignOut }) {
+export default function SettingsPage({ user, theme, onThemeChange, preferences = {}, onPreferencesChange, onAvatarChange, onSignOut }) {
   const [document, setDocument] = useState(null);
   const [local, setLocal] = useState(preferences);
   const update = (id, value) => { const next = { ...local, [id]: value }; setLocal(next); onPreferencesChange(next); };
@@ -19,11 +21,26 @@ export default function SettingsPage({ theme, onThemeChange, preferences = {}, o
   };
   if (document) return <DocumentPage document={docs[document]} onBack={() => setDocument(null)} onSignOut={onSignOut} />;
   return <div className="min-h-screen bg-ink"><div className="mx-auto max-w-3xl px-5 py-8 sm:px-8 lg:px-12 lg:py-10"><header className="border-b border-white/8 pb-8"><p className="eyebrow text-lime">Game settings</p><h1 className="mt-2 font-display text-4xl font-extrabold">Tune your run.</h1><p className="mt-2 text-sm leading-6 text-muted">These preferences are saved to your Grindly account.</p></header>
+    <AvatarSettings user={user} onAvatarChange={onAvatarChange} />
     <section className="mt-8"><p className="eyebrow">Appearance</p><div className="mt-3 grid gap-3 sm:grid-cols-3"><ThemeButton active={theme === 'dark'} icon={Moon} label="Dark" onClick={() => onThemeChange('dark')} /><ThemeButton active={theme === 'light'} icon={Sun} label="Light" onClick={() => onThemeChange('light')} /><ThemeButton active={theme === 'system'} icon={Palette} label="System" onClick={() => onThemeChange('system')} /></div></section>
     {preferenceGroups.map((group) => <section key={group.title} className="mt-8"><p className="eyebrow">{group.title}</p><div className="card mt-3 divide-y divide-white/8 p-0">{group.rows.map(({ id, label, detail, icon: Icon, select }) => <div key={id} className="flex items-center gap-4 p-4"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-lime/10 text-lime"><Icon size={18} /></div><div className="min-w-0 flex-1"><p className="text-sm font-bold">{label}</p><p className="mt-1 text-xs text-muted">{detail}</p></div>{select ? <select value={local[id] || 'public'} onChange={(event) => update(id, event.target.value)} className="rounded-lg border border-white/10 bg-ink px-2 py-1.5 text-xs text-white"><option value="public">Public</option><option value="friends">Friends</option><option value="private">Private</option></select> : <button onClick={() => update(id, local[id] === false)} aria-pressed={local[id] !== false} className={`relative h-6 w-11 rounded-full transition ${local[id] !== false ? 'bg-lime' : 'bg-white/15'}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${local[id] !== false ? 'left-6' : 'left-1'}`} /></button>}</div>)}</div></section>)}
     <section className="mt-8"><p className="eyebrow">Account & legal</p><div className="card mt-3 divide-y divide-white/8 p-0">{[['account', 'Account settings', 'Update your identity and sign-in details', UserRound], ['terms', 'Terms & Conditions', 'The rules of the journey', FileText], ['privacy', 'Privacy Policy', 'How Grindly handles your data', Shield], ['community', 'Community guidelines', 'Keep the grind respectful', Shield]].map(([id, label, detail, Icon]) => <button key={id} onClick={() => setDocument(id)} className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-white/[.03]"><Icon size={18} className="text-muted" /><span className="min-w-0 flex-1"><span className="block text-sm font-bold">{label}</span><span className="mt-1 block text-xs text-muted">{detail}</span></span><ChevronRight size={16} className="text-muted" /></button>)}</div></section>
     <button onClick={onSignOut} className="mt-8 w-full rounded-xl border border-rose-400/25 bg-rose-400/10 px-4 py-3 text-sm font-bold text-rose-200">Sign out of Grindly</button>
   </div></div>;
+}
+
+function AvatarSettings({ user, onAvatarChange }) {
+  const fileInput = useRef(null);
+  const [preview, setPreview] = useState(user?.avatar || 'avatar-1');
+  const choose = (value) => { setPreview(value); onAvatarChange?.(value); };
+  const upload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith('image/') || file.size > 350000) return;
+    const reader = new FileReader();
+    reader.onload = () => choose(reader.result);
+    reader.readAsDataURL(file);
+  };
+  return <section className="mt-8"><p className="eyebrow">Identity</p><div className="card mt-3 p-5"><div className="flex items-center gap-4"><Avatar avatar={preview} size="lg" /><div><p className="font-display text-xl font-bold">Choose your signal</p><p className="mt-1 text-xs text-muted">Changes preview instantly and appear across your profile, navigation, and rankings.</p></div></div><div className="mt-5 grid grid-cols-5 gap-2 sm:grid-cols-10">{avatarOptions.map((option) => <button key={option.id} type="button" title={option.name} aria-label={`Choose ${option.name} avatar`} onClick={() => choose(option.id)} className={`grid aspect-square place-items-center rounded-xl border transition ${preview === option.id ? 'border-lime bg-lime/15 ring-2 ring-lime/20' : 'border-white/10 bg-ink hover:border-lime/40'}`}><Avatar avatar={option.id} size="sm" border={false} /></button>)}</div><div className="mt-4 flex items-center gap-3"><button type="button" onClick={() => fileInput.current?.click()} className="btn-secondary text-xs">Upload custom image</button><span className="text-xs text-muted">JPG, PNG, or WebP · 350 KB max</span><input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={upload} className="hidden" /></div></div></section>;
 }
 
 function ThemeButton({ active, icon: Icon, label, onClick }) { return <button onClick={onClick} className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${active ? 'border-lime/40 bg-lime/10' : 'border-white/10 bg-panel hover:border-lime/25'}`}><Icon size={18} className={active ? 'text-lime' : 'text-muted'} /><span className="flex-1 text-sm font-bold">{label}</span>{active && <Check size={16} className="text-lime" />}</button>; }

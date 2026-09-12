@@ -18,14 +18,14 @@ from app.settings import settings
 router = APIRouter()
 
 SHOP_ITEMS = [
-    {"id": "golden-frame", "name": "Golden Frame", "category": "Profile Frame", "price": 500, "rarity": "Rare", "preview": "✨", "locked": False},
-    {"id": "legendary-border", "name": "Legendary Border", "category": "Profile Frame", "price": 2000, "rarity": "Legendary", "preview": "👑", "locked": False},
-    {"id": "neon-nameplate", "name": "Neon Nameplate", "category": "Nameplate", "price": 750, "rarity": "Epic", "preview": "⚡", "locked": False},
-    {"id": "shadow-theme", "name": "Shadow Theme", "category": "Theme", "price": 300, "rarity": "Common", "preview": "🌑", "locked": False},
-    {"id": "particle-effects", "name": "Particle Effects", "category": "XP Effect", "price": 1500, "rarity": "Epic", "preview": "✨", "locked": False},
-    {"id": "mythic-aura", "name": "Mythic Aura", "category": "Avatar Effect", "price": 5000, "rarity": "Mythic", "preview": "🌟", "locked": True, "unlocksAt": "Level 50"},
-    {"id": "rainbow-wings", "name": "Rainbow Wings", "category": "Avatar Effect", "price": 3000, "rarity": "Legendary", "preview": "🦄", "locked": True, "unlocksAt": "Chest #42"},
-    {"id": "champion-badge", "name": "Champion Badge", "category": "Badge", "price": 1000, "rarity": "Rare", "preview": "🏆", "locked": False},
+    {"id": "golden-frame", "name": "Golden Frame", "category": "Profile Frame", "price": 500, "rarity": "Rare", "preview": "golden-frame", "locked": False},
+    {"id": "legendary-border", "name": "Legendary Border", "category": "Profile Frame", "price": 2000, "rarity": "Legendary", "preview": "legendary-border", "locked": False},
+    {"id": "neon-nameplate", "name": "Neon Nameplate", "category": "Nameplate", "price": 750, "rarity": "Epic", "preview": "neon-nameplate", "locked": False},
+    {"id": "shadow-theme", "name": "Shadow Theme", "category": "Theme", "price": 300, "rarity": "Common", "preview": "shadow-theme", "locked": False},
+    {"id": "particle-effects", "name": "Particle Effects", "category": "XP Effect", "price": 1500, "rarity": "Epic", "preview": "particle-effects", "locked": False},
+    {"id": "mythic-aura", "name": "Mythic Aura", "category": "Avatar Effect", "price": 5000, "rarity": "Mythic", "preview": "mythic-aura", "locked": True, "unlocksAt": "Level 50"},
+    {"id": "rainbow-wings", "name": "Rainbow Wings", "category": "Avatar Effect", "price": 3000, "rarity": "Legendary", "preview": "rainbow-wings", "locked": True, "unlocksAt": "Chest #42"},
+    {"id": "champion-badge", "name": "Champion Badge", "category": "Badge", "price": 1000, "rarity": "Rare", "preview": "champion-badge", "locked": False},
 ]
 
 
@@ -149,10 +149,17 @@ def health() -> dict[str, str]:
 @router.get("/me")
 def get_me(user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
     completed = database.scalar(select(func.count(Quest.id)).where(Quest.user_id == user.id, Quest.status == "completed")) or 0
+    category_rows = database.execute(
+        select(Quest.category, func.count(Quest.id))
+        .where(Quest.user_id == user.id, Quest.status == "completed")
+        .group_by(Quest.category)
+    ).all()
     rank = database.scalar(select(func.count(User.id)).where(User.experience > user.experience)) or 0
     payload = serialize_user(user)
     payload["globalRank"] = rank + 1
     payload["completedQuests"] = completed
+    payload["completedQuestCount"] = completed
+    payload["categoryCounts"] = {category: count for category, count in category_rows}
     payload["activity"] = [
         {"id": item.id, "title": item.title, "detail": item.detail, "time": item.created_at.isoformat() + "Z", "icon": item.kind}
         for item in database.scalars(select(Activity).where(Activity.user_id == user.id).order_by(Activity.created_at.desc()).limit(10))
@@ -161,9 +168,9 @@ def get_me(user: User = Depends(current_user), database: Session = Depends(get_d
     if completed >= 1:
         payload["achievements"].append({"id": "first-steps", "name": "First Steps", "description": "Complete your first quest", "icon": "✓", "rarity": "Common"})
     if user.streak >= 7:
-        payload["achievements"].append({"id": "on-fire", "name": "On Fire", "description": "Maintain a 7-day streak", "icon": "🔥", "rarity": "Rare"})
+        payload["achievements"].append({"id": "seven-streak", "name": "Seven-Day Signal", "description": "Maintain a 7-day streak", "icon": "streak", "rarity": "Rare"})
     if completed >= 50:
-        payload["achievements"].append({"id": "grind-never-stops", "name": "Grind Never Stops", "description": "Complete 50 quests", "icon": "🏆", "rarity": "Epic"})
+        payload["achievements"].append({"id": "fifty-quests", "name": "Seasoned Grinder", "description": "Complete 50 quests", "icon": "medal", "rarity": "Epic"})
     return payload
 
 
@@ -420,6 +427,24 @@ def public_profile(username: str, user: User = Depends(current_user), database: 
         result["email"] = target.email
     if values.get("show_stats", True):
         result["attributes"] = target.attributes or {}
+        completed = database.scalar(select(func.count(Quest.id)).where(Quest.user_id == target.id, Quest.status == "completed")) or 0
+        result["completedQuests"] = completed
+        result["achievements"] = [
+            {"id": "first-quest", "name": "First Signal", "rarity": "Common"}
+        ] if completed >= 1 else []
+        if target.streak >= 7:
+            result["achievements"].append({"id": "seven-streak", "name": "Seven-Day Signal", "rarity": "Rare"})
+        if completed >= 50:
+            result["achievements"].append({"id": "fifty-quests", "name": "Seasoned Grinder", "rarity": "Epic"})
+        equipped = database.scalars(select(InventoryItem).where(
+            InventoryItem.user_id == target.id, InventoryItem.equipped.is_(True)
+        )).all()
+        catalog = {item["id"]: item for item in SHOP_ITEMS}
+        result["equippedItems"] = [
+            {"id": item.item_id, "name": catalog.get(item.item_id, {}).get("name", item.item_id),
+             "category": catalog.get(item.item_id, {}).get("category", "Cosmetic")}
+            for item in equipped
+        ]
     return result
 
 
