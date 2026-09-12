@@ -50,6 +50,47 @@ button { cursor: pointer; }
   .medal-emblem { position: relative; display: grid; height: 6.5rem; width: 6.5rem; place-items: center; border: 3px solid currentColor; border-radius: 42% 42% 50% 50%; background: linear-gradient(145deg, rgba(255,255,255,.28), rgba(0,0,0,.2)); box-shadow: inset 0 0 0 5px rgba(255,255,255,.08), 0 12px 28px rgba(0,0,0,.28); transform: rotate(45deg); }
   .medal-emblem svg { transform: rotate(-45deg); }
   .medal-emblem-locked { filter: grayscale(1); opacity: .5; }
+  .artifact-frame { border: 4px solid #c8f169; border-radius: 36% 36% 48% 48%; box-shadow: inset 0 0 0 4px rgba(255,255,255,.16), 0 0 22px rgba(200,241,105,.28); }
+  .artifact-frame-rare { border-radius: 50%; border-color: #8fd9ff; }
+  .artifact-frame-epic { border-radius: 24% 50% 24% 50%; border-color: #d4b6ff; transform: rotate(45deg); }
+  .artifact-frame-epic > * { transform: rotate(-45deg); }
+  .artifact-frame-elite { border-color: #ffab91; clip-path: polygon(50% 0, 90% 20%, 100% 70%, 50% 100%, 0 70%, 10% 20%); }
+  .artifact-frame-legendary { border-color: #ffd27a; border-width: 6px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,210,122,.12), 0 0 38px rgba(255,210,122,.4); }
+  .artifact-frame-mythic { border-color: #f0abfc; border-radius: 44% 18% 44% 18%; box-shadow: 0 0 0 5px rgba(240,171,252,.12), 0 0 48px rgba(217,70,239,.6); animation: artifact-breathe 2.8s ease-in-out infinite; }
+  .artifact-nameplate { min-width: 12rem; border-radius: .7rem; color: white; background: linear-gradient(100deg, rgba(255,255,255,.18), rgba(255,255,255,.03)); }
+  .artifact-nameplate-rare { transform: skewX(-10deg); background: linear-gradient(100deg, rgba(56,189,248,.45), rgba(15,23,42,.5)); }
+  .artifact-nameplate-epic { border-radius: 1.2rem 0 1.2rem 0; background: linear-gradient(100deg, rgba(167,139,250,.55), rgba(38,20,60,.6)); }
+  .artifact-nameplate-elite { clip-path: polygon(7% 0, 100% 0, 93% 100%, 0 100%); background: linear-gradient(100deg, rgba(251,113,133,.55), rgba(61,18,34,.7)); }
+  .artifact-nameplate-legendary { background: linear-gradient(100deg, #b7791f, #ffe08a 48%, #8d5a16); color: #241505; }
+  .artifact-nameplate-mythic { border-color: #f0abfc; background: linear-gradient(100deg, #701a75, #312e81 50%, #be185d); box-shadow: 0 0 28px rgba(217,70,239,.45); }
+  .artifact-avatar-effect { border: 2px solid rgba(255,255,255,.55); }
+  .artifact-avatar-effect-rare { box-shadow: 0 0 0 5px rgba(56,189,248,.2), 0 0 24px #38bdf8; }
+  .artifact-avatar-effect-epic { box-shadow: 0 0 0 7px rgba(167,139,250,.18), 0 0 30px #a78bfa; }
+  .artifact-avatar-effect-elite { box-shadow: 0 0 0 6px rgba(251,113,133,.2), 0 0 36px #fb7185; }
+  .artifact-avatar-effect-legendary { box-shadow: 0 0 0 8px rgba(251,191,36,.2), 0 0 42px #fbbf24; }
+  .artifact-avatar-effect-mythic { box-shadow: 0 0 0 8px rgba(217,70,239,.22), 0 0 55px #d946ef; animation: artifact-breathe 2s ease-in-out infinite; }
+  .artifact-theme { background: linear-gradient(145deg, #213322, #101b1d); }
+  .artifact-theme-rare { background: linear-gradient(145deg, #12334b, #111827); }
+  .artifact-theme-epic { background: linear-gradient(145deg, #3b2366, #151225); }
+  .artifact-theme-elite { background: linear-gradient(145deg, #60263d, #21121e); }
+  .artifact-theme-legendary { background: linear-gradient(145deg, #8b641f, #241b0b); }
+  .artifact-theme-mythic { background: radial-gradient(circle at 80% 10%, #7e22ce, transparent 42%), linear-gradient(145deg, #11104a, #350b2f); }
+  .artifact-xp-effect { text-shadow: 0 0 18px rgba(200,241,105,.9); animation: artifact-float 2s ease-in-out infinite; }
+  .artifact-badge { border: 2px solid currentColor; border-radius: 50% 50% 42% 42%; color: #c8f169; background: radial-gradient(circle, rgba(255,255,255,.24), rgba(200,241,105,.08)); box-shadow: inset 0 0 0 5px rgba(255,255,255,.08), 0 12px 30px rgba(0,0,0,.28); }
+  .artifact-badge-rare { color: #8fd9ff; border-radius: 38% 50% 38% 50%; }
+  .artifact-badge-epic { color: #d4b6ff; transform: rotate(45deg); }
+  .artifact-badge-epic svg { transform: rotate(-45deg); }
+  .artifact-badge-elite { color: #ffab91; clip-path: polygon(50% 0, 100% 25%, 82% 100%, 18% 100%, 0 25%); }
+  .artifact-badge-legendary { color: #ffd27a; box-shadow: 0 0 34px rgba(255,210,122,.35); }
+  .artifact-badge-mythic { color: #f0abfc; box-shadow: 0 0 48px rgba(217,70,239,.55); }
+  .artifact-trophy { color: #c8f169; filter: drop-shadow(0 12px 14px rgba(0,0,0,.35)); }
+  .artifact-trophy-rare { color: #8fd9ff; }
+  .artifact-trophy-epic { color: #d4b6ff; }
+  .artifact-trophy-elite { color: #ffab91; }
+  .artifact-trophy-legendary { color: #ffd27a; filter: drop-shadow(0 0 18px rgba(255,210,122,.5)); }
+  .artifact-trophy-mythic { color: #f0abfc; filter: drop-shadow(0 0 28px rgba(217,70,239,.75)); }
+  @keyframes artifact-breathe { 50% { transform: scale(1.04); } }
+  @keyframes artifact-float { 50% { transform: translateY(-6px); } }
   .speech-bubble { position: relative; border: 1px solid rgba(200,241,105,.24); border-radius: 1rem; background: rgba(200,241,105,.08); padding: 1rem; }
   .speech-bubble::before { position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; transform: translateX(-50%) rotate(45deg); border-left: 1px solid rgba(200,241,105,.24); border-top: 1px solid rgba(200,241,105,.24); background: #17271a; content: ''; }
   .onboarding-glow { position: fixed; left: 50%; top: -8rem; height: 30rem; width: 30rem; transform: translateX(-50%); border-radius: 999px; background: rgba(200,241,105,.1); filter: blur(120px); pointer-events: none; }

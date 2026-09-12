@@ -2,13 +2,16 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.auth import current_user
 from app.database import get_db
-from app.models.entities import Activity, InventoryItem, Quest, QuestSession, User
+from app.models.entities import (
+    AIAction, Activity, Friendship, InventoryItem, Notification, Quest, QuestSession,
+    User, UserPreference,
+)
 from app.reward_engine import calculate_reward
 from app.settings import settings
 
@@ -55,6 +58,22 @@ class UserSetup(BaseModel):
     avatar: str = Field(default="avatar-1", max_length=500000)
 
 
+class FriendRequest(BaseModel):
+    username: str | None = Field(default=None, min_length=3, max_length=32)
+    user_id: int | None = Field(default=None, alias="userId")
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class PreferenceUpdate(BaseModel):
+    values: dict[str, Any] = Field(default_factory=dict)
+    model_config = ConfigDict(extra="allow")
+
+
+class AIActionRequest(BaseModel):
+    action: str = Field(min_length=1, max_length=64)
+    input: dict[str, Any] = Field(default_factory=dict)
+
+
 def serialize_user(user: User) -> dict[str, Any]:
     return {
         "id": user.id,
@@ -99,6 +118,27 @@ def serialize_quest(quest: Quest, active_session: QuestSession | None = None) ->
         "coins": quest.reward_coins,
         "createdAt": quest.created_at.isoformat() + "Z",
     }
+
+
+def _friend_ids(database: Session, user_id: int) -> set[int]:
+    rows = database.scalars(select(Friendship).where(
+        ((Friendship.requester_id == user_id) | (Friendship.addressee_id == user_id)),
+        Friendship.status == "accepted",
+    )).all()
+    return {row.addressee_id if row.requester_id == user_id else row.requester_id for row in rows}
+
+
+def _relationship(database: Session, first: int, second: int) -> Friendship | None:
+    return database.scalar(select(Friendship).where(
+        ((Friendship.requester_id == first) & (Friendship.addressee_id == second))
+        | ((Friendship.requester_id == second) & (Friendship.addressee_id == first))
+    ))
+
+
+def serialize_notification(item: Notification) -> dict[str, Any]:
+    return {"id": item.id, "kind": item.kind, "title": item.title, "message": item.message,
+            "payload": item.payload or {}, "read": item.read_at is not None,
+            "createdAt": item.created_at.isoformat() + "Z"}
 
 
 @router.get("/health")
@@ -244,8 +284,8 @@ def leaderboard(user: User = Depends(current_user), database: Session = Depends(
 
 @router.get("/shop")
 def shop(user: User = Depends(current_user), database: Session = Depends(get_db)) -> list[dict[str, Any]]:
-    owned = {item.item_id for item in database.scalars(select(InventoryItem).where(InventoryItem.user_id == user.id))}
-    return [{**item, "owned": item["id"] in owned} for item in SHOP_ITEMS]
+    owned = {item.item_id: item.equipped for item in database.scalars(select(InventoryItem).where(InventoryItem.user_id == user.id))}
+    return [{**item, "owned": item["id"] in owned, "equipped": owned.get(item["id"], False)} for item in SHOP_ITEMS]
 
 
 @router.post("/shop/{item_id}/purchase")
@@ -261,3 +301,222 @@ def purchase(item_id: str, user: User = Depends(current_user), database: Session
     database.add(InventoryItem(user_id=user.id, item_id=item_id))
     database.commit()
     return {"item": {**item, "owned": True}, "user": serialize_user(user)}
+
+
+@router.get("/friends/search")
+def search_friends(q: str = "", user: User = Depends(current_user), database: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    if not q.strip():
+        return []
+    matches = database.scalars(select(User).where(
+        User.id != user.id,
+        (User.username.ilike(f"%{q.strip()}%") | User.display_name.ilike(f"%{q.strip()}%")),
+    ).limit(25)).all()
+    friend_ids = _friend_ids(database, user.id)
+    return [{"id": item.id, "username": item.username, "displayName": item.display_name,
+             "avatar": item.avatar, "level": item.level, "relationship": "friends" if item.id in friend_ids else
+             (lambda r: r.status if r and r.requester_id == user.id else ("incoming" if r else "none"))
+             (_relationship(database, user.id, item.id))} for item in matches]
+
+
+@router.get("/friends")
+def list_friends(user: User = Depends(current_user), database: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    ids = _friend_ids(database, user.id)
+    friends = database.scalars(select(User).where(User.id.in_(ids)).order_by(User.experience.desc())).all() if ids else []
+    return [{"id": item.id, "username": item.username, "displayName": item.display_name,
+             "avatar": item.avatar, "level": item.level, "xp": item.experience} for item in friends]
+
+
+@router.post("/friends/requests", status_code=status.HTTP_201_CREATED)
+def send_friend_request(payload: FriendRequest, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    target = database.scalar(select(User).where(User.id == payload.user_id)) if payload.user_id else database.scalar(select(User).where(User.username == payload.username))
+    if not target or target.id == user.id:
+        raise HTTPException(status_code=404, detail="User not found")
+    existing = _relationship(database, user.id, target.id)
+    if existing:
+        if existing.status == "rejected":
+            database.delete(existing)
+            database.flush()
+            existing = None
+    if existing:
+        if existing.status == "pending" and existing.addressee_id == user.id:
+            existing.status = "accepted"
+            database.add(Notification(user_id=target.id, kind="friend", title="Friend request accepted", message=f"{user.display_name} accepted your request"))
+            database.commit()
+            return {"status": "accepted"}
+        raise HTTPException(status_code=409, detail="A relationship already exists")
+    relationship = Friendship(requester_id=user.id, addressee_id=target.id)
+    database.add(relationship)
+    database.add(Notification(user_id=target.id, kind="friend", title="New friend request", message=f"{user.display_name} sent you a friend request", payload={"userId": user.id}))
+    database.commit()
+    return {"id": relationship.id, "status": relationship.status}
+
+
+@router.get("/friends/requests")
+def friend_requests(user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, list[dict[str, Any]]]:
+    incoming = database.scalars(select(Friendship).where(Friendship.addressee_id == user.id, Friendship.status == "pending")).all()
+    outgoing = database.scalars(select(Friendship).where(Friendship.requester_id == user.id, Friendship.status == "pending")).all()
+    def render(row: Friendship, incoming_request: bool) -> dict[str, Any]:
+        person = database.get(User, row.requester_id if incoming_request else row.addressee_id)
+        return {"id": row.id, "userId": person.id, "username": person.username, "displayName": person.display_name, "avatar": person.avatar, "createdAt": row.created_at.isoformat() + "Z"}
+    return {"incoming": [render(row, True) for row in incoming], "outgoing": [render(row, False) for row in outgoing]}
+
+
+def _change_request(request_id: int, action: str, user: User, database: Session) -> dict[str, str]:
+    row = database.scalar(select(Friendship).where(Friendship.id == request_id, Friendship.addressee_id == user.id, Friendship.status == "pending"))
+    if not row:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    row.status = "accepted" if action == "accept" else "rejected"
+    requester = database.get(User, row.requester_id)
+    database.add(Notification(user_id=requester.id, kind="friend", title=f"Friend request {row.status}", message=f"{user.display_name} {row.status} your request"))
+    database.commit()
+    return {"status": row.status}
+
+
+@router.post("/friends/requests/{request_id}/accept")
+def accept_friend_request(request_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, str]:
+    return _change_request(request_id, "accept", user, database)
+
+
+@router.post("/friends/requests/{request_id}/reject")
+def reject_friend_request(request_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, str]:
+    return _change_request(request_id, "reject", user, database)
+
+
+@router.delete("/friends/{friend_id}")
+def remove_friend(friend_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, str]:
+    row = _relationship(database, user.id, friend_id)
+    if not row or row.status != "accepted":
+        raise HTTPException(status_code=404, detail="Friend not found")
+    database.delete(row)
+    database.commit()
+    return {"status": "removed"}
+
+
+@router.get("/friends/leaderboard")
+def friend_leaderboard(user: User = Depends(current_user), database: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    ids = _friend_ids(database, user.id) | {user.id}
+    users = database.scalars(select(User).where(User.id.in_(ids)).order_by(User.experience.desc(), User.level.desc())).all()
+    return [{"rank": index + 1, "id": item.id, "username": item.username, "displayName": item.display_name,
+             "avatar": item.avatar, "level": item.level, "xp": item.experience, "isCurrentUser": item.id == user.id}
+            for index, item in enumerate(users)]
+
+
+@router.get("/users/{username}/profile")
+@router.get("/profile/{username}")
+def public_profile(username: str, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    target = database.scalar(select(User).where(User.username == username))
+    if not target:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    prefs = database.get(UserPreference, target.id)
+    values = prefs.values if prefs else {}
+    visibility = values.get("profile_visibility", "public")
+    is_friend = target.id in _friend_ids(database, user.id)
+    if target.id != user.id and (visibility == "private" or (visibility == "friends" and not is_friend)):
+        return {"id": target.id, "username": target.username, "displayName": target.display_name, "avatar": target.avatar, "private": True}
+    result = {"id": target.id, "username": target.username, "displayName": target.display_name, "avatar": target.avatar,
+              "level": target.level, "streak": target.streak, "bestStreak": target.best_streak,
+              "experience": target.experience, "joinedDate": target.created_at.date().isoformat(), "private": False}
+    if values.get("show_email", False) and target.id == user.id:
+        result["email"] = target.email
+    if values.get("show_stats", True):
+        result["attributes"] = target.attributes or {}
+    return result
+
+
+@router.get("/notifications")
+def list_notifications(unread_only: bool = False, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    query = select(Notification).where(Notification.user_id == user.id)
+    if unread_only:
+        query = query.where(Notification.read_at.is_(None))
+    items = database.scalars(query.order_by(Notification.created_at.desc()).limit(100)).all()
+    return {"items": [serialize_notification(item) for item in items], "unreadCount": database.scalar(select(func.count(Notification.id)).where(Notification.user_id == user.id, Notification.read_at.is_(None))) or 0}
+
+
+@router.post("/notifications/{notification_id}/read")
+@router.patch("/notifications/{notification_id}/read")
+def mark_notification_read(notification_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, bool]:
+    item = database.scalar(select(Notification).where(Notification.id == notification_id, Notification.user_id == user.id))
+    if not item:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    item.read_at = datetime.utcnow()
+    database.commit()
+    return {"read": True}
+
+
+@router.post("/notifications/read-all")
+def mark_notifications_read(user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, int]:
+    items = database.scalars(select(Notification).where(Notification.user_id == user.id, Notification.read_at.is_(None))).all()
+    for item in items:
+        item.read_at = datetime.utcnow()
+    database.commit()
+    return {"updated": len(items)}
+
+
+@router.get("/preferences")
+@router.get("/settings")
+def get_preferences(user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    item = database.get(UserPreference, user.id)
+    return {"preferences": item.values if item else {}}
+
+
+@router.patch("/preferences")
+@router.patch("/settings")
+def update_preferences(payload: PreferenceUpdate, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    item = database.get(UserPreference, user.id)
+    if not item:
+        item = UserPreference(user_id=user.id, values={})
+        database.add(item)
+    extra_values = {key: value for key, value in payload.model_dump(exclude={"values"}).items()}
+    item.values = {**(item.values or {}), **payload.values, **extra_values}
+    database.commit()
+    return {"preferences": item.values}
+
+
+@router.get("/inventory")
+def inventory(user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    items = database.scalars(select(InventoryItem).where(InventoryItem.user_id == user.id)).all()
+    return {"items": [{**next((x for x in SHOP_ITEMS if x["id"] == item.item_id), {"id": item.item_id}), "equipped": item.equipped} for item in items]}
+
+
+@router.post("/inventory/{item_id}/equip")
+def equip_item(item_id: str, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    owned = database.scalar(select(InventoryItem).where(InventoryItem.user_id == user.id, InventoryItem.item_id == item_id))
+    if not owned:
+        raise HTTPException(status_code=404, detail="Item is not owned")
+    category = next((x["category"] for x in SHOP_ITEMS if x["id"] == item_id), None)
+    for item in database.scalars(select(InventoryItem).where(InventoryItem.user_id == user.id)):
+        if category and next((x["category"] for x in SHOP_ITEMS if x["id"] == item.item_id), None) == category:
+            item.equipped = False
+    owned.equipped = True
+    database.commit()
+    return {"itemId": item_id, "equipped": True}
+
+
+@router.post("/inventory/{item_id}/unequip")
+@router.delete("/inventory/{item_id}/equip")
+@router.delete("/inventory/{item_id}/unequip")
+def unequip_item(item_id: str, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    item = database.scalar(select(InventoryItem).where(InventoryItem.user_id == user.id, InventoryItem.item_id == item_id))
+    if not item:
+        raise HTTPException(status_code=404, detail="Item is not owned")
+    item.equipped = False
+    database.commit()
+    return {"itemId": item_id, "equipped": False}
+
+
+@router.get("/ai/context")
+def ai_context(user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    quests = database.scalars(select(Quest).where(Quest.user_id == user.id, Quest.status != "completed").limit(20)).all()
+    inventory_items = database.scalars(select(InventoryItem).where(InventoryItem.user_id == user.id, InventoryItem.equipped.is_(True))).all()
+    return {"user": serialize_user(user), "quests": [serialize_quest(q) for q in quests],
+            "preferences": (database.get(UserPreference, user.id).values if database.get(UserPreference, user.id) else {}),
+            "equipped": [item.item_id for item in inventory_items],
+            "friends": list_friends(user, database)}
+
+
+@router.post("/ai/actions")
+def ai_action(payload: AIActionRequest, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    result = {"action": payload.action, "status": "received", "message": "Action is ready for the Grindly assistant."}
+    database.add(AIAction(user_id=user.id, action=payload.action, input=payload.input, result=result))
+    database.commit()
+    return result

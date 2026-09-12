@@ -23,11 +23,16 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def migrate_schema() -> None:
+    Base.metadata.create_all(bind=engine)
     with engine.begin() as connection:
         if engine.dialect.name == "postgresql":
             connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE"))
             connection.execute(text("ALTER TABLE users ALTER COLUMN avatar TYPE TEXT"))
+            connection.execute(text("ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS equipped BOOLEAN NOT NULL DEFAULT FALSE"))
         elif engine.dialect.name == "sqlite":
             columns = connection.execute(text("PRAGMA table_info(users)")).all()
             if not any(column[1] == "onboarding_completed" for column in columns):
                 connection.execute(text("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT 0"))
+            inventory_columns = connection.execute(text("PRAGMA table_info(inventory_items)")).all()
+            if not any(column[1] == "equipped" for column in inventory_columns):
+                connection.execute(text("ALTER TABLE inventory_items ADD COLUMN equipped BOOLEAN NOT NULL DEFAULT 0"))
