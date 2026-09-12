@@ -11,7 +11,7 @@ import CompletionAnimation from '../components/CompletionAnimation';
 const categories = ['All', 'Study', 'Coding', 'Health', 'Work', 'Personal'];
 const blankQuest = { title: '', description: '', category: 'Personal', difficulty: 'Medium', duration: 30 };
 
-export default function Home({ user, quests, onStart, onComplete, onCreateQuest, onOpenAssistant }) {
+export default function Home({ user, quests, activeQuestId, onStart, onComplete, onCreateQuest, onOpenAssistant }) {
   const [filter, setFilter] = useState('All');
   const [showBuilder, setShowBuilder] = useState(false);
   const [questDraft, setQuestDraft] = useState(blankQuest);
@@ -55,7 +55,7 @@ export default function Home({ user, quests, onStart, onComplete, onCreateQuest,
           <div className="flex flex-wrap items-end justify-between gap-4"><div><div className="flex items-center gap-2"><span className="status-dot" /><p className="eyebrow">Your daily board</p></div><h2 className="mt-2 font-display text-2xl font-extrabold">Today's quests <span className="ml-1 text-muted">({incompleteQuests.length})</span></h2></div><button onClick={() => setShowBuilder((value) => !value)} className="btn-primary flex items-center gap-2"><Plus size={16} /> New quest</button></div>
           <div className="mt-5 flex items-center gap-2 overflow-x-auto pb-1">{categories.map((category) => <button key={category} onClick={() => setFilter(category)} className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition ${filter === category ? 'border-lime/40 bg-lime/10 text-lime-soft' : 'border-white/10 bg-white/[.03] text-muted hover:bg-white/[.07]'}`}>{category}</button>)}</div>
           <AnimatePresence>{showBuilder && <QuestBuilder draft={questDraft} setDraft={setQuestDraft} onSubmit={submitQuest} onCancel={() => setShowBuilder(false)} />}</AnimatePresence>
-          <div className="mt-5 space-y-3">{incompleteQuests.length ? incompleteQuests.map((quest, index) => <QuestCard key={quest.id} quest={quest} onStart={onStart} onComplete={completeQuest} index={index} />) : <EmptyQuests onCreate={() => setShowBuilder(true)} />}</div>
+          <div className="mt-5 space-y-3">{incompleteQuests.length ? incompleteQuests.map((quest, index) => <QuestCard key={quest.id} quest={quest} blocked={Boolean(activeQuestId && activeQuestId !== quest.id)} onStart={onStart} onComplete={completeQuest} index={index} />) : <EmptyQuests onCreate={() => setShowBuilder(true)} />}</div>
           {completedQuests.length > 0 && <div className="mt-10"><div className="mb-4 flex items-center gap-2"><CheckCircle2 size={17} className="text-[#8ff0b6]" /><p className="eyebrow">Cleared today · {completedQuests.length}</p></div><div className="space-y-3">{completedQuests.map((quest, index) => <QuestCard key={quest.id} quest={quest} index={index} />)}</div></div>}
         </section>
 

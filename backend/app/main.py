@@ -2,10 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
-from app.database import Base, engine
+from app.database import Base, engine, migrate_schema
 from app.settings import settings
 
 Base.metadata.create_all(bind=engine)
+migrate_schema()
 
 app = FastAPI(title="Grindly API", version="1.0.0")
 app.add_middleware(

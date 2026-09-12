@@ -52,7 +52,7 @@ class QuestCreate(BaseModel):
 class UserSetup(BaseModel):
     display_name: str = Field(min_length=1, max_length=80)
     username: str = Field(min_length=3, max_length=32)
-    avatar: str = Field(default="avatar-1", max_length=32)
+    avatar: str = Field(default="avatar-1", max_length=500000)
 
 
 def serialize_user(user: User) -> dict[str, Any]:
@@ -62,6 +62,7 @@ def serialize_user(user: User) -> dict[str, Any]:
         "displayName": user.display_name,
         "email": user.email,
         "avatar": user.avatar,
+        "onboardingCompleted": user.onboarding_completed,
         "level": user.level,
         "experience": user.experience,
         "nextLevelExp": user.next_level_exp,
@@ -134,6 +135,7 @@ def update_me(payload: UserSetup, user: User = Depends(current_user), database: 
     user.display_name = payload.display_name
     user.username = payload.username
     user.avatar = payload.avatar
+    user.onboarding_completed = True
     database.commit()
     database.refresh(user)
     return serialize_user(user)
@@ -165,6 +167,9 @@ def start_quest(quest_id: int, user: User = Depends(current_user), database: Ses
         raise HTTPException(status_code=404, detail="Quest not found")
     if quest.status == "completed":
         raise HTTPException(status_code=409, detail="Completed quests cannot be started again")
+    active_quest = database.scalar(select(Quest).where(Quest.user_id == user.id, Quest.status == "active", Quest.id != quest.id))
+    if active_quest:
+        raise HTTPException(status_code=409, detail={"code": "ACTIVE_QUEST_EXISTS", "activeQuestId": active_quest.id, "message": "Finish your current quest first. One quest at a time."})
     session = database.scalar(select(QuestSession).where(QuestSession.quest_id == quest.id, QuestSession.user_id == user.id))
     if session and session.active:
         return serialize_quest(quest, session)

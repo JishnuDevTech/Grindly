@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.settings import settings
@@ -20,3 +20,14 @@ def get_db() -> Generator[Session, None, None]:
         yield database
     finally:
         database.close()
+
+
+def migrate_schema() -> None:
+    with engine.begin() as connection:
+        if engine.dialect.name == "postgresql":
+            connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE"))
+            connection.execute(text("ALTER TABLE users ALTER COLUMN avatar TYPE TEXT"))
+        elif engine.dialect.name == "sqlite":
+            columns = connection.execute(text("PRAGMA table_info(users)")).all()
+            if not any(column[1] == "onboarding_completed" for column in columns):
+                connection.execute(text("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT 0"))
