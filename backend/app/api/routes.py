@@ -164,10 +164,20 @@ def get_me(user: User = Depends(current_user), database: Session = Depends(get_d
         ((Friendship.requester_id == user.id) | (Friendship.addressee_id == user.id)),
     )) or 0
     payload["categoryCounts"] = {category: count for category, count in category_rows}
+    recent_activity = database.scalars(
+        select(Activity)
+        .where(Activity.user_id == user.id, Activity.created_at >= datetime.utcnow() - timedelta(days=365))
+        .order_by(Activity.created_at.desc())
+    ).all()
+    activity_grid: dict[str, int] = {}
+    for item in recent_activity:
+        key = item.created_at.date().isoformat()
+        activity_grid[key] = activity_grid.get(key, 0) + 1
+    payload["activityGrid"] = activity_grid
     payload["activity"] = [
         {"id": item.id, "title": item.title, "detail": item.detail, "time": item.created_at.isoformat() + "Z",
          "createdAt": item.created_at.isoformat() + "Z", "date": item.created_at.date().isoformat(), "icon": item.kind}
-        for item in database.scalars(select(Activity).where(Activity.user_id == user.id).order_by(Activity.created_at.desc()).limit(10))
+        for item in recent_activity[:20]
     ]
     payload["achievements"] = []
     if completed >= 1:
@@ -263,6 +273,7 @@ def complete_quest(quest_id: int, user: User = Depends(current_user), database: 
         next_streak = user.streak + 1
     else:
         next_streak = 1
+    previous_level = user.level
     user.streak = next_streak
     user.best_streak = max(user.best_streak, next_streak)
     user.last_completed_on = today
@@ -285,7 +296,19 @@ def complete_quest(quest_id: int, user: User = Depends(current_user), database: 
     database.add(Activity(user_id=user.id, kind="check", title=f"Completed {quest.title}", detail=f"+{reward.xp} XP · +{reward.coins} coins"))
     database.commit()
     database.refresh(quest)
-    return {"quest": serialize_quest(quest), "reward": {"xp": reward.xp, "coins": reward.coins, "attribute": reward.attribute, "attributePoints": reward.attribute_points, "antiSpamMultiplier": reward.anti_spam_multiplier}, "user": serialize_user(user)}
+    return {
+        "quest": serialize_quest(quest),
+        "reward": {
+            "xp": reward.xp,
+            "coins": reward.coins,
+            "attribute": reward.attribute,
+            "attributePoints": reward.attribute_points,
+            "antiSpamMultiplier": reward.anti_spam_multiplier,
+            "levelUp": user.level > previous_level,
+            "newLevel": user.level,
+        },
+        "user": serialize_user(user),
+    }
 
 
 @router.get("/leaderboard")

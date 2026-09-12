@@ -11,7 +11,7 @@ export default function Profile({ user, activity = [], inventory = [], friends =
   const achievements = user.achievements || [];
   const attributes = Object.entries(user.attributes || {});
   const joinDate = user.joinedDate ? new Date(user.joinedDate) : null;
-  const activityMap = activity.reduce((map, entry) => { const key = entry.date || entry.completedAt || entry.createdAt; if (key) { const date = new Date(key).toISOString().slice(0, 10); map[date] = (map[date] || 0) + 1; } return map; }, {});
+  const activityMap = user.activityGrid || activity.reduce((map, entry) => { const key = entry.date || entry.completedAt || entry.createdAt; if (key) { const date = new Date(key).toISOString().slice(0, 10); map[date] = (map[date] || 0) + 1; } return map; }, {});
   const today = new Date();
   const cells = Array.from({ length: 365 }, (_, index) => { const date = new Date(today); date.setDate(today.getDate() - (364 - index)); const key = date.toISOString().slice(0, 10); return { key, date, count: activityMap[key] || 0 }; });
   const activeDays = new Set(Object.keys(activityMap)).size;

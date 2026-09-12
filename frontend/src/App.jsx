@@ -150,7 +150,9 @@ export default function App() {
       const result = await api.completeQuest(questId, token);
       setQuests((current) => current.map((quest) => quest.id === questId ? result.quest : quest));
       setUser(result.user);
-      showToast(`Quest cleared. +${result.reward.xp} XP · +${result.reward.coins} coins.`);
+      showToast(result.reward.levelUp
+        ? `Level ${result.reward.newLevel} reached! +${result.reward.xp} XP · +${result.reward.coins} coins.`
+        : `Quest cleared. +${result.reward.xp} XP · +${result.reward.coins} coins.`);
       const nextLeaderboard = await api.getLeaderboard(token);
       setLeaderboard(nextLeaderboard);
       return result;
