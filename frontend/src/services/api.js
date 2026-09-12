@@ -5,14 +5,19 @@ async function request(path, options = {}, getToken) {
     throw new Error('VITE_API_URL is missing. Set it to your deployed FastAPI URL ending in /api.');
   }
   const token = getToken ? await getToken() : null;
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    throw new Error(`Could not reach the Grindly API at ${API_URL}. Check Render CORS and backend status.`);
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(body.detail?.message || body.detail || 'The request failed');

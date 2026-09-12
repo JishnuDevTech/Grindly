@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     firebase_project_id: str | None = None
     firebase_service_account_json: str | None = None
+    firebase_service_account_json_base64: str | None = None
     minimum_task_minutes: int = 5
     max_task_minutes: int = 480
 

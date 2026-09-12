@@ -1,4 +1,5 @@
 import json
+import base64
 from functools import lru_cache
 
 import firebase_admin
@@ -15,11 +16,14 @@ bearer = HTTPBearer(auto_error=False)
 
 @lru_cache
 def firebase_ready() -> bool:
-    if not settings.firebase_service_account_json:
+    service_account_json = settings.firebase_service_account_json
+    if not service_account_json and settings.firebase_service_account_json_base64:
+        service_account_json = base64.b64decode(settings.firebase_service_account_json_base64).decode("utf-8")
+    if not service_account_json:
         return False
     if firebase_admin._apps:
         return True
-    service_account = credentials.Certificate(json.loads(settings.firebase_service_account_json))
+    service_account = credentials.Certificate(json.loads(service_account_json))
     firebase_admin.initialize_app(service_account)
     return True
 

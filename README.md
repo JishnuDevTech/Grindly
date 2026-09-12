@@ -92,6 +92,20 @@ The backend CORS value must contain the exact frontend origin:
 CORS_ORIGINS=["https://grindly-psi.vercel.app"]
 ```
 
+For local testing, include both local origins as well:
+
+```env
+CORS_ORIGINS=["https://grindly-psi.vercel.app","http://localhost:5173","http://127.0.0.1:5173"]
+```
+
+If Render does not preserve the service-account JSON cleanly, create a base64 value locally without printing it:
+
+```bash
+base64 -i ~/Downloads/your-firebase-service-account.json | tr -d '\\n' | pbcopy
+```
+
+Add the clipboard value to Render as `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64`. Use this instead of `FIREBASE_SERVICE_ACCOUNT_JSON`; never add both.
+
 Never put the Firebase service-account JSON in Vercel. It belongs only in the backend host's secret variables. The Firebase Web API key can be present in the frontend bundle, but provider settings and backend token verification still protect the application.
 
 ## Quest security model
