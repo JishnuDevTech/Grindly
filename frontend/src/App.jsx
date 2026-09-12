@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Award, Bot, Home as HomeIcon, LogOut, MessageCircle, Plus, ShoppingBag, Sparkles, User, X } from 'lucide-react';
+import { Award, Bot, Home as HomeIcon, LogOut, MessageCircle, Plus, ShoppingBag, Sparkles, User, X, Route, Settings } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { firebaseAuth, firebaseConfigured } from './services/firebase';
 import { api } from './services/api';
@@ -10,6 +10,8 @@ import Profile from './pages/Profile';
 import Shop from './pages/Shop';
 import Leaderboard from './pages/Leaderboard';
 import Onboarding from './pages/Onboarding';
+import Progression from './pages/Progression';
+import SettingsPage from './pages/Settings';
 import { GrindlyCharacter } from './components/GrindlyCharacter';
 
 const navItems = [
@@ -17,6 +19,8 @@ const navItems = [
   { id: 'leaderboard', label: 'Ranks', icon: Award },
   { id: 'shop', label: 'Vault', icon: ShoppingBag },
   { id: 'profile', label: 'Profile', icon: User },
+  { id: 'progression', label: 'Journey', icon: Route },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function App() {
@@ -32,6 +36,7 @@ export default function App() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [toast, setToast] = useState(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [theme, setTheme] = useState(() => window.localStorage.getItem('grindly-theme') || 'dark');
 
   useEffect(() => {
     if (!firebaseAuth) {
@@ -91,6 +96,10 @@ export default function App() {
   const showToast = (message, tone = 'success') => setToast({ message, tone });
 
   const handleStartQuest = async (questId) => {
+    if (quests.some((quest) => quest.status === 'active' && quest.id !== questId)) {
+      showToast('Finish your current quest first.', 'warning');
+      return;
+    }
     try {
       const started = await api.startQuest(questId, token);
       setQuests((current) => current.map((quest) => quest.id === questId ? started : quest));
@@ -146,15 +155,21 @@ export default function App() {
   if (!user.onboardingCompleted) return <Onboarding user={user} onComplete={handleOnboardingComplete} />;
 
   const activeQuest = quests.find((quest) => quest.status === 'active');
+  const updateTheme = (nextTheme) => {
+    setTheme(nextTheme);
+    window.localStorage.setItem('grindly-theme', nextTheme);
+  };
 
   const page = {
     home: <Home user={user} quests={quests} activeQuestId={activeQuest?.id} onStart={handleStartQuest} onComplete={handleCompleteQuest} onCreateQuest={handleCreateQuest} onOpenAssistant={() => setAssistantOpen(true)} />,
     profile: <Profile user={user} activity={user.activity || []} />,
+    progression: <Progression user={user} />,
+    settings: <SettingsPage theme={theme} onThemeChange={updateTheme} />,
     shop: <Shop user={user} items={shopItems} onPurchase={handlePurchase} />,
     leaderboard: <Leaderboard user={user} entries={leaderboard} />,
   }[currentPage];
 
-  return <div className="min-h-screen bg-ink text-white"><div className="app-noise" /><div className="relative mx-auto flex min-h-screen max-w-[1600px]"><aside className="hidden w-24 shrink-0 flex-col items-center border-r border-white/10 bg-ink/80 py-7 lg:flex"><button onClick={() => setCurrentPage('home')} className="brand-mark" aria-label="Go to today's quests">G</button><div className="mt-20 flex flex-col gap-4">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`nav-rail-button ${currentPage === id ? 'nav-rail-button-active' : ''}`} title={label}><Icon size={19} strokeWidth={1.8} /><span>{label}</span></button>)}</div><button className="mt-auto nav-rail-button" onClick={() => signOut(firebaseAuth)} title="Sign out"><LogOut size={19} strokeWidth={1.8} /><span>Sign out</span></button></aside><main className="min-w-0 flex-1 pb-24 lg:pb-0"><AnimatePresence mode="wait"><motion.div key={currentPage} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .22 }}>{page}</motion.div></AnimatePresence></main><aside className="hidden w-[310px] shrink-0 border-l border-white/10 bg-ink/60 px-5 py-7 xl:block"><CompanionCard onOpen={() => setAssistantOpen(true)} /></aside></div><nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink/90 px-3 py-2 backdrop-blur-xl lg:hidden"><div className="mx-auto flex max-w-lg items-center justify-around">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`mobile-nav-button ${currentPage === id ? 'mobile-nav-button-active' : ''}`}><Icon size={19} /><span>{label}</span></button>)}<button onClick={() => signOut(firebaseAuth)} className="mobile-nav-button"><LogOut size={19} /><span>Exit</span></button></div></nav><AnimatePresence>{assistantOpen && <CompanionPanel onClose={() => setAssistantOpen(false)} />} {toast && <Toast toast={toast} />}</AnimatePresence></div>;
+  return <div className={`min-h-screen text-white ${theme === 'light' ? 'light-theme' : ''}`}><div className="app-noise" /><div className="relative mx-auto flex min-h-screen max-w-[1600px]"><aside className="hidden w-24 shrink-0 flex-col items-center border-r border-white/10 bg-ink/80 py-7 lg:flex"><button onClick={() => setCurrentPage('home')} className="brand-mark" aria-label="Go to today's quests">G</button><div className="mt-12 flex flex-col gap-3">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`nav-rail-button ${currentPage === id ? 'nav-rail-button-active' : ''}`} title={label}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>)}</div><button className="mt-auto nav-rail-button" onClick={() => signOut(firebaseAuth)} title="Sign out"><LogOut size={19} strokeWidth={1.8} /><span>Sign out</span></button></aside><main className="min-w-0 flex-1 pb-24 lg:pb-0"><AnimatePresence mode="wait"><motion.div key={currentPage} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .22 }}>{page}</motion.div></AnimatePresence></main><aside className="hidden w-[310px] shrink-0 border-l border-white/10 bg-ink/60 px-5 py-7 xl:block"><CompanionCard onOpen={() => setAssistantOpen(true)} /></aside></div><nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink/90 px-3 py-2 backdrop-blur-xl lg:hidden"><div className="mx-auto flex max-w-lg items-center justify-around">{navItems.slice(0, 5).map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`mobile-nav-button ${currentPage === id ? 'mobile-nav-button-active' : ''}`}><Icon size={18} /><span>{label}</span></button>)}</div></nav><AnimatePresence>{assistantOpen && <CompanionPanel onClose={() => setAssistantOpen(false)} />} {toast && <Toast toast={toast} />}</AnimatePresence></div>;
 }
 
 function LoadingScreen({ message }) { return <div className="grid min-h-screen place-items-center bg-ink"><div className="text-center"><span className="brand-mark mx-auto">G</span><p className="mt-5 text-sm text-muted">{message}</p></div></div>; }

@@ -1,14 +1,14 @@
 export const avatarOptions = [
-  { id: 'avatar-1', emoji: '😎', name: 'Cool Guy' },
-  { id: 'avatar-2', emoji: '🧙', name: 'Wizard' },
-  { id: 'avatar-3', emoji: '🥷', name: 'Ninja' },
-  { id: 'avatar-4', emoji: '🚀', name: 'Rocket' },
-  { id: 'avatar-5', emoji: '🐉', name: 'Dragon' },
-  { id: 'avatar-6', emoji: '🧛', name: 'Vampire' },
-  { id: 'avatar-7', emoji: '⚔️', name: 'Knight' },
-  { id: 'avatar-8', emoji: '🤖', name: 'Robot' },
-  { id: 'avatar-9', emoji: '👽', name: 'Alien' },
-  { id: 'avatar-10', emoji: '🎭', name: 'Performer' },
+  { id: 'avatar-1', name: 'Signal', tone: 'lime' },
+  { id: 'avatar-2', name: 'Orbit', tone: 'blue' },
+  { id: 'avatar-3', name: 'Forge', tone: 'violet' },
+  { id: 'avatar-4', name: 'Pulse', tone: 'amber' },
+  { id: 'avatar-5', name: 'Bloom', tone: 'rose' },
+  { id: 'avatar-6', name: 'Nova', tone: 'cyan' },
+  { id: 'avatar-7', name: 'Summit', tone: 'orange' },
+  { id: 'avatar-8', name: 'Core', tone: 'green' },
+  { id: 'avatar-9', name: 'Drift', tone: 'indigo' },
+  { id: 'avatar-10', name: 'Echo', tone: 'pink' },
 ];
 
 export const getCategoryColor = (category) => ({
