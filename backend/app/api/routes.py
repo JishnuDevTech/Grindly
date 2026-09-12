@@ -291,7 +291,9 @@ def complete_quest(quest_id: int, user: User = Depends(current_user), database: 
 @router.get("/leaderboard")
 def leaderboard(user: User = Depends(current_user), database: Session = Depends(get_db)) -> list[dict[str, Any]]:
     users = database.scalars(select(User).order_by(User.experience.desc(), User.level.desc()).limit(100)).all()
-    return [{"rank": index + 1, "username": entry.username, "displayName": entry.display_name, "avatar": entry.avatar, "level": entry.level, "xp": entry.experience, "isCurrentUser": entry.id == user.id} for index, entry in enumerate(users)]
+    return [{"rank": index + 1, "id": entry.id, "username": entry.username, "displayName": entry.display_name,
+             "avatar": entry.avatar, "level": entry.level, "xp": entry.experience,
+             "isCurrentUser": entry.id == user.id} for index, entry in enumerate(users)]
 
 
 @router.get("/shop")
@@ -383,7 +385,7 @@ def friend_requests(user: User = Depends(current_user), database: Session = Depe
     return {"incoming": [render(row, True) for row in incoming], "outgoing": [render(row, False) for row in outgoing]}
 
 
-def _change_request(request_id: int, action: str, user: User, database: Session) -> dict[str, str]:
+def _change_request(request_id: int, action: str, user: User, database: Session) -> dict[str, Any]:
     row = database.scalar(select(Friendship).where(Friendship.id == request_id, Friendship.addressee_id == user.id, Friendship.status == "pending"))
     if not row:
         raise HTTPException(status_code=404, detail="Friend request not found")
@@ -391,16 +393,16 @@ def _change_request(request_id: int, action: str, user: User, database: Session)
     requester = database.get(User, row.requester_id)
     database.add(Notification(user_id=requester.id, kind="friend", title=f"Friend request {row.status}", message=f"{user.display_name} {row.status} your request"))
     database.commit()
-    return {"status": row.status}
+    return {"status": row.status, "friendId": requester.id}
 
 
 @router.post("/friends/requests/{request_id}/accept")
-def accept_friend_request(request_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, str]:
+def accept_friend_request(request_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
     return _change_request(request_id, "accept", user, database)
 
 
 @router.post("/friends/requests/{request_id}/reject")
-def reject_friend_request(request_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, str]:
+def reject_friend_request(request_id: int, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
     return _change_request(request_id, "reject", user, database)
 
 
