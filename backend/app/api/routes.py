@@ -541,6 +541,29 @@ def ai_context(user: User = Depends(current_user), database: Session = Depends(g
 
 @router.post("/ai/actions")
 def ai_action(payload: AIActionRequest, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
+    if payload.action == "CREATE_QUEST":
+        title = str(payload.input.get("title", "")).strip()
+        minutes = payload.input.get("estimatedMinutes", payload.input.get("minutes", 0))
+        if not title or len(title) < 3:
+            raise HTTPException(status_code=422, detail="A quest title of at least 3 characters is required")
+        if not isinstance(minutes, int) or minutes < 5 or minutes > 480:
+            raise HTTPException(status_code=422, detail="Quest time must be between 5 and 480 minutes")
+        quest = Quest(
+            user_id=user.id,
+            title=title[:120],
+            description=str(payload.input.get("description", ""))[:1000],
+            category=str(payload.input.get("category", "Personal"))[:32],
+            difficulty=str(payload.input.get("difficulty", "Medium")),
+            priority=str(payload.input.get("priority", "Medium")),
+            estimated_minutes=minutes,
+        )
+        database.add(quest)
+        database.flush()
+        result = {"action": payload.action, "status": "created", "quest": serialize_quest(quest),
+                  "message": f"Created '{quest.title}' as a {quest.estimated_minutes}-minute quest."}
+        database.add(AIAction(user_id=user.id, action=payload.action, input=payload.input, result=result))
+        database.commit()
+        return result
     result = {"action": payload.action, "status": "received", "message": "Action is ready for the Grindly assistant."}
     database.add(AIAction(user_id=user.id, action=payload.action, input=payload.input, result=result))
     database.commit()
