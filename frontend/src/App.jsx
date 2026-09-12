@@ -218,7 +218,7 @@ export default function App() {
 
   const page = {
     home: <Home user={user} quests={quests} activeQuestId={activeQuest?.id} onStart={handleStartQuest} onComplete={handleCompleteQuest} onCreateQuest={handleCreateQuest} onOpenAssistant={() => setAssistantOpen(true)} />,
-    profile: <Profile user={user} activity={user.activity || []} inventory={inventory} />,
+    profile: <Profile user={user} activity={user.activity || []} inventory={inventory} friends={friends} />,
     progression: <Progression user={user} />,
     achievements: <Achievements user={user} />,
     settings: <SettingsPage user={user} theme={theme} onThemeChange={updateTheme} preferences={preferences} onPreferencesChange={handlePreferences} onAvatarChange={handleAvatarChange} onSignOut={() => signOut(firebaseAuth)} />,

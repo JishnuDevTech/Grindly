@@ -159,6 +159,10 @@ def get_me(user: User = Depends(current_user), database: Session = Depends(get_d
     payload["globalRank"] = rank + 1
     payload["completedQuests"] = completed
     payload["completedQuestCount"] = completed
+    payload["friendCount"] = database.scalar(select(func.count(Friendship.id)).where(
+        Friendship.status == "accepted",
+        ((Friendship.requester_id == user.id) | (Friendship.addressee_id == user.id)),
+    )) or 0
     payload["categoryCounts"] = {category: count for category, count in category_rows}
     payload["activity"] = [
         {"id": item.id, "title": item.title, "detail": item.detail, "time": item.created_at.isoformat() + "Z",
@@ -320,10 +324,16 @@ def search_friends(q: str = "", user: User = Depends(current_user), database: Se
         (User.username.ilike(f"%{q.strip()}%") | User.display_name.ilike(f"%{q.strip()}%")),
     ).limit(25)).all()
     friend_ids = _friend_ids(database, user.id)
-    return [{"id": item.id, "username": item.username, "displayName": item.display_name,
-             "avatar": item.avatar, "level": item.level, "relationship": "friends" if item.id in friend_ids else
-             (lambda r: r.status if r and r.requester_id == user.id else ("incoming" if r else "none"))
-             (_relationship(database, user.id, item.id))} for item in matches]
+    results = []
+    for item in matches:
+        relationship = _relationship(database, user.id, item.id)
+        results.append({"id": item.id, "username": item.username, "displayName": item.display_name,
+                        "avatar": item.avatar, "level": item.level,
+                        "relationship": "friends" if item.id in friend_ids else
+                        (relationship.status if relationship and relationship.requester_id == user.id else
+                         ("incoming" if relationship else "none")),
+                        "relationshipId": relationship.id if relationship else None})
+    return results
 
 
 @router.get("/friends")
@@ -423,16 +433,26 @@ def public_profile(username: str, user: User = Depends(current_user), database: 
     values = prefs.values if prefs else {}
     visibility = values.get("profile_visibility", "public")
     is_friend = target.id in _friend_ids(database, user.id)
-    if target.id != user.id and (visibility == "private" or (visibility == "friends" and not is_friend)):
-        return {"id": target.id, "username": target.username, "displayName": target.display_name, "avatar": target.avatar, "private": True}
-    result = {"id": target.id, "username": target.username, "displayName": target.display_name, "avatar": target.avatar,
-              "level": target.level, "streak": target.streak, "bestStreak": target.best_streak,
-              "experience": target.experience, "joinedDate": target.created_at.date().isoformat(), "private": False}
     relationship = _relationship(database, user.id, target.id)
-    result["relationship"] = "friends" if is_friend else (
+    relationship_state = "friends" if is_friend else (
         relationship.status if relationship and relationship.requester_id == user.id else
         "incoming" if relationship else "none"
     )
+    friend_count = database.scalar(select(func.count(Friendship.id)).where(
+        Friendship.status == "accepted",
+        ((Friendship.requester_id == target.id) | (Friendship.addressee_id == target.id)),
+    )) or 0
+    if target.id != user.id and (visibility == "private" or (visibility == "friends" and not is_friend)):
+        return {"id": target.id, "username": target.username, "displayName": target.display_name,
+                "avatar": target.avatar, "friendCount": friend_count,
+                "relationship": relationship_state, "relationshipId": relationship.id if relationship else None,
+                "private": True}
+    result = {"id": target.id, "username": target.username, "displayName": target.display_name, "avatar": target.avatar,
+              "level": target.level, "streak": target.streak, "bestStreak": target.best_streak,
+              "experience": target.experience, "joinedDate": target.created_at.date().isoformat(), "private": False}
+    result["relationship"] = relationship_state
+    result["relationshipId"] = relationship.id if relationship else None
+    result["friendCount"] = friend_count
     if values.get("show_email", False) and target.id == user.id:
         result["email"] = target.email
     if values.get("show_stats", True):
