@@ -26,6 +26,7 @@ export const achievementCatalog = [
 
 const rewardRarities = ['Common', 'Rare', 'Epic', 'Elite', 'Legendary', 'Mythic'];
 const rewardPrice = { Common: 180, Rare: 360, Epic: 720, Elite: 1200, Legendary: 2200, Mythic: 4200 };
+const profileFrameMaterials = ['wood', 'iron', 'bronze', 'copper', 'silver', 'steel', 'titanium', 'gold', 'rose-gold', 'platinum', 'obsidian', 'pearl', 'sapphire', 'ruby', 'emerald', 'amethyst', 'moonstone', 'meteor', 'crystal', 'diamond'];
 const reward = (category, names, descriptions) => names.map((name, index) => {
   const rarity = rewardRarities[Math.min(rewardRarities.length - 1, Math.floor(index / 4))];
   return {
@@ -37,15 +38,16 @@ const reward = (category, names, descriptions) => names.map((name, index) => {
     price: rewardPrice[rarity],
     catalogOnly: true,
     unlocksAt: rarity === 'Common' ? 'Unlock in Chest' : `Unlock at Level ${8 + index * 2}`,
+    material: category === 'Profile Frame' ? profileFrameMaterials[index] : undefined,
   };
 });
 
 export const shopCatalog = [
   ...reward('Profile Frame', [
-    'Mosslight Ring', 'Signal Border', 'Dawn Circuit', 'Tideglass Frame', 'Astral Relay',
-    'Emberline Halo', 'Prism Bastion', 'Moonforge Frame', 'Verdant Crown', 'Solaris Edge',
-    'Starlit Archive', 'Obsidian Bloom', 'Aurora Bastion', 'Chrono Laurel', 'Eclipse Array',
-    'Celestial Gate', 'Voidgarden Frame', 'Nova Reliquary', 'Worldtree Halo', 'Singularity Frame',
+    'Mosswood Ring', 'Iron Signal', 'Bronze Dawn', 'Copper Circuit', 'Silver Relay',
+    'Steel Ember', 'Titanium Bastion', 'Gold Moonforge', 'Rosegold Crown', 'Platinum Edge',
+    'Obsidian Archive', 'Pearl Bloom', 'Sapphire Bastion', 'Ruby Laurel', 'Emerald Array',
+    'Amethyst Gate', 'Moonstone Garden', 'Meteor Reliquary', 'Crystal Worldtree', 'Diamond Singularity',
   ], [
     'A quiet lime signal for your first loadout.', 'Clean geometry for consistent grinders.', 'A warm horizon for early momentum.', 'Glass-blue light caught at the edge of focus.', 'A ring mapped from distant constellations.',
     'A red-orange trace left by hard quests.', 'Refraction armor for a player who keeps climbing.', 'Forged under a violet moon.', 'A living border for patient builders.', 'Gold light for a new chapter.',

@@ -81,6 +81,28 @@ button { cursor: pointer; }
   .artifact-frame-elite { border-color: #ffab91; clip-path: polygon(50% 0, 90% 20%, 100% 70%, 50% 100%, 0 70%, 10% 20%); }
   .artifact-frame-legendary { border-color: #ffd27a; border-width: 6px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,210,122,.12), 0 0 38px rgba(255,210,122,.4); }
   .artifact-frame-mythic { border-color: #f0abfc; border-radius: 44% 18% 44% 18%; box-shadow: 0 0 0 5px rgba(240,171,252,.12), 0 0 48px rgba(217,70,239,.6); animation: artifact-breathe 2.8s ease-in-out infinite; }
+  .artifact-frame { border-width: 5px; background: transparent; box-shadow: inset 0 0 0 2px rgba(255,255,255,.12), 0 12px 22px rgba(0,0,0,.38); }
+  .artifact-frame-material-wood { border-color: #765239; background: repeating-linear-gradient(12deg, rgba(255,220,160,.12) 0 2px, transparent 2px 7px); box-shadow: inset 0 0 0 2px rgba(42,24,12,.32), 0 10px 16px rgba(28,17,10,.6); filter: saturate(.78); }
+  .artifact-frame-material-iron { border-color: #65717b; background: linear-gradient(135deg, rgba(255,255,255,.16), transparent 35%); box-shadow: inset 0 0 0 2px rgba(10,15,20,.55), 0 0 12px rgba(110,130,145,.16); }
+  .artifact-frame-material-bronze { border-color: #a9673b; background: linear-gradient(135deg, #d08b55, transparent 32%); box-shadow: inset 0 0 0 2px rgba(56,25,12,.38), 0 0 16px rgba(169,103,59,.26); }
+  .artifact-frame-material-copper { border-color: #dd8a62; background: linear-gradient(135deg, rgba(255,210,177,.28), transparent 38%); box-shadow: inset 0 0 0 2px rgba(93,35,20,.38), 0 0 18px rgba(221,138,98,.28); }
+  .artifact-frame-material-silver { border-color: #d9e5ed; background: linear-gradient(135deg, rgba(255,255,255,.55), transparent 30%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.2), 0 0 22px rgba(217,229,237,.34); }
+  .artifact-frame-material-steel { border-color: #90a4b8; background: repeating-linear-gradient(135deg, rgba(255,255,255,.22) 0 2px, transparent 2px 8px); box-shadow: inset 0 0 0 2px rgba(28,43,59,.5), 0 0 20px rgba(144,164,184,.28); }
+  .artifact-frame-material-titanium { border-color: #b8c5d8; background: linear-gradient(135deg, #ced9e8, #7585a0 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(36,48,71,.45), 0 0 24px rgba(184,197,216,.3); }
+  .artifact-frame-material-gold { border-color: #f6c85f; background: linear-gradient(135deg, #fff0a7, #b87914 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(255,240,167,.28), 0 0 28px rgba(246,200,95,.42); }
+  .artifact-frame-material-rose-gold { border-color: #f3a5a0; background: linear-gradient(135deg, #ffe0d8, #a95766 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(255,224,216,.25), 0 0 26px rgba(243,165,160,.38); }
+  .artifact-frame-material-platinum { border-color: #e9f3ff; background: linear-gradient(135deg, #ffffff, #9caec4 38%, transparent 40%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.38), 0 0 32px rgba(233,243,255,.48); }
+  .artifact-frame-material-obsidian { border-color: #596277; background: linear-gradient(135deg, #8994a8, #171b2a 34%, transparent 35%); box-shadow: inset 0 0 0 2px rgba(7,8,14,.75), 0 0 28px rgba(89,98,119,.3); }
+  .artifact-frame-material-pearl { border-color: #f9e9d2; background: linear-gradient(135deg, #fff8ed, #cbaec0 45%, transparent 46%); box-shadow: inset 0 0 0 2px rgba(255,248,237,.38), 0 0 30px rgba(249,233,210,.34); }
+  .artifact-frame-material-sapphire { border-color: #63b5ff; background: linear-gradient(135deg, #b6e2ff, #1557b0 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(182,226,255,.25), 0 0 34px rgba(99,181,255,.52); }
+  .artifact-frame-material-ruby { border-color: #ff6f83; background: linear-gradient(135deg, #ffc0c8, #9d1735 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(255,192,200,.25), 0 0 34px rgba(255,111,131,.48); }
+  .artifact-frame-material-emerald { border-color: #72f0b0; background: linear-gradient(135deg, #c0ffda, #15814f 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(192,255,218,.24), 0 0 34px rgba(114,240,176,.48); }
+  .artifact-frame-material-amethyst { border-color: #d2a1ff; background: linear-gradient(135deg, #f0d8ff, #6935ae 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(240,216,255,.24), 0 0 36px rgba(210,161,255,.5); }
+  .artifact-frame-material-moonstone { border-color: #9fe9ff; background: linear-gradient(135deg, #e0fbff, #4b8faa 42%, transparent 43%); box-shadow: inset 0 0 0 2px rgba(224,251,255,.26), 0 0 38px rgba(159,233,255,.5); animation: frame-lunar-pulse 3.8s ease-in-out infinite; }
+  .artifact-frame-material-meteor { border-color: #ff9873; background: repeating-linear-gradient(120deg, #51414b 0 5px, #a45a46 5px 7px, transparent 7px 13px); box-shadow: inset 0 0 0 2px rgba(255,152,115,.22), 0 0 36px rgba(255,122,84,.42); }
+  .artifact-frame-material-crystal { border-color: #e4fcff; background: repeating-linear-gradient(60deg, rgba(255,255,255,.42) 0 3px, rgba(117,220,255,.28) 3px 7px, transparent 7px 12px); box-shadow: inset 0 0 0 2px rgba(255,255,255,.35), 0 0 42px rgba(162,235,255,.62); }
+  .artifact-frame-material-diamond { border-color: #f6ffff; background: conic-gradient(from 20deg, rgba(255,255,255,.85), rgba(135,224,255,.58), rgba(255,255,255,.92), rgba(207,166,255,.52), rgba(255,255,255,.85)); box-shadow: inset 0 0 0 2px rgba(255,255,255,.66), 0 0 14px #fff, 0 0 48px rgba(127,224,255,.9), 0 0 70px rgba(216,167,255,.45); animation: diamond-shimmer 2.4s linear infinite; }
+  .artifact-frame-material-diamond::before { position: absolute; inset: -9px; border: 1px solid rgba(255,255,255,.72); border-radius: inherit; content: ''; animation: diamond-ring 2.4s ease-in-out infinite; }
   .vault-artifact-card { border-radius: 1.05rem 2.1rem 1.05rem 2.1rem; transition: transform .25s ease, box-shadow .25s ease; }
   .artifact-preview::after { position: absolute; inset: 12% 18%; border: 1px solid rgba(255,255,255,.08); border-radius: 48% 12% 48% 12%; content: ''; pointer-events: none; transform: rotate(12deg); }
   .artifact-frame-v1 { border-radius: 22% 50% 22% 50%; }
@@ -153,6 +175,9 @@ button { cursor: pointer; }
   @keyframes artifact-float { 50% { transform: translateY(-6px); } }
   @keyframes artifact-orbit { 50% { transform: translate(1.4rem, .6rem); } }
   @keyframes artifact-spark { 50% { opacity: .25; transform: translate(0, -1.8rem) scale(1.8); } }
+  @keyframes diamond-shimmer { to { filter: hue-rotate(18deg) brightness(1.22); } }
+  @keyframes diamond-ring { 50% { transform: scale(1.08) rotate(18deg); opacity: .35; } }
+  @keyframes frame-lunar-pulse { 50% { box-shadow: inset 0 0 0 2px rgba(224,251,255,.4), 0 0 48px rgba(159,233,255,.72); } }
   .speech-bubble { position: relative; border: 1px solid rgba(200,241,105,.24); border-radius: 1rem; background: rgba(200,241,105,.08); padding: 1rem; }
   .speech-bubble::before { position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; transform: translateX(-50%) rotate(45deg); border-left: 1px solid rgba(200,241,105,.24); border-top: 1px solid rgba(200,241,105,.24); background: #17271a; content: ''; }
   .onboarding-glow { position: fixed; left: 50%; top: -8rem; height: 30rem; width: 30rem; transform: translateX(-50%); border-radius: 999px; background: rgba(200,241,105,.1); filter: blur(120px); pointer-events: none; }
