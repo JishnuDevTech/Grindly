@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Award, Bell, Home as HomeIcon, LogOut, MessageCircle, Plus, ShoppingBag, Sparkles, User, X, Route, Settings, Medal } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { deleteUser, onAuthStateChanged, signOut } from 'firebase/auth';
 import { firebaseAuth, firebaseConfigured } from './services/firebase';
 import { api } from './services/api';
 import Auth from './pages/Auth';
@@ -80,7 +80,18 @@ export default function App() {
           setFriends(nextFriends);
           setFriendRequests(nextRequests);
           setNotifications(nextNotifications);
-          setPreferences(nextPreferences.preferences || {});
+          const storedAgreements = JSON.parse(window.sessionStorage.getItem('grindly-pending-agreements') || 'null');
+          const savedPreferences = nextPreferences.preferences || {};
+          const agreementsToSave = storedAgreements && !savedPreferences.terms_accepted_at ? {
+            terms_accepted_at: new Date().toISOString(),
+            privacy_accepted_at: new Date().toISOString(),
+            community_accepted_at: new Date().toISOString(),
+          } : {};
+          if (Object.keys(agreementsToSave).length) {
+            const persisted = await api.updatePreferences({ ...agreementsToSave }, token);
+            window.sessionStorage.removeItem('grindly-pending-agreements');
+            setPreferences(persisted.preferences || { ...savedPreferences, ...agreementsToSave });
+          } else setPreferences(savedPreferences);
           setInventory(nextInventory.items || []);
           setAiContext(nextAIContext);
           const liveIds = new Set(nextShop.map((item) => item.id));
@@ -217,18 +228,18 @@ export default function App() {
   };
 
   const page = {
-    home: <Home user={user} quests={quests} activeQuestId={activeQuest?.id} onStart={handleStartQuest} onComplete={handleCompleteQuest} onCreateQuest={handleCreateQuest} onOpenAssistant={() => setAssistantOpen(true)} />,
+    home: <Home user={user} quests={quests} friends={friends} activeQuestId={activeQuest?.id} onStart={handleStartQuest} onComplete={handleCompleteQuest} onCreateQuest={handleCreateQuest} onOpenAssistant={() => setAssistantOpen(true)} />,
     profile: <Profile user={user} activity={user.activity || []} inventory={inventory} friends={friends} />,
     progression: <Progression user={user} />,
     achievements: <Achievements user={user} />,
-    settings: <SettingsPage user={user} theme={theme} onThemeChange={updateTheme} preferences={preferences} onPreferencesChange={handlePreferences} onAvatarChange={handleAvatarChange} onSignOut={() => signOut(firebaseAuth)} />,
+    settings: <SettingsPage user={user} theme={theme} onThemeChange={updateTheme} preferences={preferences} onPreferencesChange={handlePreferences} onAvatarChange={handleAvatarChange} onUpdateAccount={async (payload) => { const nextUser = await api.updateMe({ display_name: payload.displayName, username: payload.username, avatar: user.avatar }, token); setUser((current) => ({ ...current, ...nextUser })); showToast('Account identity updated.'); }} onSignOut={() => signOut(firebaseAuth)} onDeleteAccount={async () => { await api.deleteAccount(token); if (firebaseAuth.currentUser) await deleteUser(firebaseAuth.currentUser); }} />,
     shop: <Shop user={user} items={shopItems} inventory={inventory} onPurchase={handlePurchase} onEquip={handleEquip} />,
     leaderboard: <Leaderboard user={user} entries={leaderboard} friendEntries={friendLeaderboard} getToken={token} friends={friends} friendRequests={friendRequests} onFriendsChange={setFriends} onRequestsChange={setFriendRequests} onFriendLeaderboardChange={setFriendLeaderboard} />,
   }[currentPage];
 
   const lightTheme = theme === 'light' || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: light)').matches);
   const reducedMotion = preferences.animations === false;
-  return <div className={`min-h-screen text-white ${lightTheme ? 'light-theme' : ''} ${reducedMotion ? 'reduce-motion' : ''}`}><div className="app-noise" /><div className="relative mx-auto flex min-h-screen max-w-[1600px]"><aside className="hidden w-24 shrink-0 flex-col items-center border-r border-white/10 bg-ink/80 py-7 lg:flex"><button onClick={() => setCurrentPage('home')} className="brand-mark" aria-label="Go to today's quests">G</button><button onClick={() => setCurrentPage('profile')} className="mt-4 rounded-2xl" aria-label="Open your profile"><Avatar avatar={user.avatar} size="sm" /></button><div className="mt-8 flex flex-col gap-3">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`nav-rail-button ${currentPage === id ? 'nav-rail-button-active' : ''}`} title={label}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>)}</div><button className="mt-auto nav-rail-button" onClick={() => signOut(firebaseAuth)} title="Sign out"><LogOut size={19} strokeWidth={1.8} /><span>Sign out</span></button></aside><main className="min-w-0 flex-1 pb-24 lg:pb-0"><AnimatePresence mode="wait"><motion.div key={currentPage} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .22 }}>{page}</motion.div></AnimatePresence></main></div><NotificationCenter notifications={notifications} onRead={markNotificationRead} onReadAll={markAllNotificationsRead} /><CompanionPeek onOpen={() => setAssistantOpen(true)} /><nav className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/10 bg-ink/90 px-3 py-2 backdrop-blur-xl lg:hidden"><div className="mx-auto flex min-w-max max-w-lg items-center justify-around gap-2">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`mobile-nav-button ${currentPage === id ? 'mobile-nav-button-active' : ''}`}><Icon size={18} /><span>{label}</span></button>)}</div></nav><AnimatePresence>{assistantOpen && <CompanionPanel context={aiContext} onAction={async (action, input) => { const result = await api.runAIAction(action, input, token); if (result.quest) { setQuests((current) => [result.quest, ...current]); setAiContext((current) => ({ ...current, quests: [result.quest, ...(current.quests || [])] })); showToast('Grindly created your quest.'); } return result; }} user={user} quests={quests} onClose={() => setAssistantOpen(false)} />} {toast && <Toast toast={toast} />}</AnimatePresence></div>;
+  return <div className={`min-h-screen text-white ${lightTheme ? 'light-theme' : ''} ${reducedMotion ? 'reduce-motion' : ''}`}><div className="app-noise" /><div className="relative mx-auto flex min-h-screen max-w-[1600px]"><aside className="hidden w-24 shrink-0 flex-col items-center border-r border-white/10 bg-ink/80 py-7 lg:flex"><button onClick={() => setCurrentPage('home')} className="brand-mark" aria-label="Go to today's quests">G</button><button onClick={() => setCurrentPage('profile')} className="mt-4 rounded-2xl" aria-label="Open your profile"><Avatar avatar={user.avatar} size="sm" /></button><div className="mt-8 flex flex-col gap-3">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`nav-rail-button ${currentPage === id ? 'nav-rail-button-active' : ''}`} title={label}><Icon size={18} strokeWidth={1.8} /><span>{label}</span></button>)}</div><button className="mt-auto nav-rail-button" onClick={() => signOut(firebaseAuth)} title="Sign out"><LogOut size={19} strokeWidth={1.8} /><span>Sign out</span></button></aside><main className="min-w-0 flex-1 pb-24 lg:pb-0"><AnimatePresence mode="wait"><motion.div key={currentPage} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .22 }}>{page}</motion.div></AnimatePresence></main></div><NotificationCenter notifications={notifications} onRead={markNotificationRead} onReadAll={markAllNotificationsRead} /><CompanionPeek onOpen={() => setAssistantOpen(true)} /><nav className="fixed inset-x-0 bottom-0 z-40 overflow-x-auto border-t border-white/10 bg-ink/90 px-3 py-2 backdrop-blur-xl lg:hidden"><div className="mx-auto flex min-w-max max-w-lg items-center justify-around gap-2">{navItems.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setCurrentPage(id)} className={`mobile-nav-button ${currentPage === id ? 'mobile-nav-button-active' : ''}`}><Icon size={18} /><span>{label}</span></button>)}</div></nav><AnimatePresence>{assistantOpen && <CompanionPanel context={aiContext} onAction={async (action, input) => { const result = await api.runAIAction(action, input, token); if (result.quest) { setQuests((current) => action === 'CREATE_QUEST' ? [result.quest, ...current] : current.map((quest) => quest.id === result.quest.id ? result.quest : quest)); setAiContext((current) => ({ ...current, quests: current.quests?.map((quest) => quest.id === result.quest.id ? result.quest : quest) || [result.quest] })); showToast(result.message || (action === 'CREATE_QUEST' ? 'Grindly created your quest.' : 'Quest started.')); } return result; }} user={user} quests={quests} onClose={() => setAssistantOpen(false)} />} {toast && <Toast toast={toast} />}</AnimatePresence></div>;
 }
 
 function LoadingScreen({ message }) { return <div className="grid min-h-screen place-items-center bg-ink"><div className="text-center"><span className="brand-mark mx-auto">G</span><p className="mt-5 text-sm text-muted">{message}</p></div></div>; }
@@ -255,6 +266,14 @@ function CompanionPanel({ onClose, context, onAction }) {
         reply = result.message || `Created ${createMatch[1].trim()} as a focused quest.`;
       } catch (error) {
         reply = error.message || 'I could not create that quest. Try a title and a time between 5 and 480 minutes.';
+      }
+    } else if (/^start (?:quest )?/i.test(text)) {
+      const requested = text.replace(/^start (?:quest )?/i, '').trim().toLowerCase();
+      const quest = (context?.quests || []).find((item) => item.title.toLowerCase().includes(requested));
+      if (!quest) reply = 'I could not find that available quest. Tell me its exact title.';
+      else {
+        try { const result = await onAction('START_QUEST', { questId: quest.id }); reply = result.message; }
+        catch (error) { reply = error.message || 'I could not start that quest.'; }
       }
     } else if (normalized.includes('level')) reply = `You are level ${context?.user?.level ?? 'unknown'} with ${context?.user?.experience ?? 0} XP toward your next level.`;
     else if (normalized.includes('streak')) reply = `Your current streak is ${context?.user?.streak ?? 0} days. Protect it with one finishable quest today.`;

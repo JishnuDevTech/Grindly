@@ -31,6 +31,7 @@ async function request(path, options = {}, getToken) {
 export const api = {
   getMe: (getToken) => request('/me', {}, getToken),
   updateMe: (payload, getToken) => request('/me', { method: 'PATCH', body: JSON.stringify(payload) }, getToken),
+  deleteAccount: (getToken) => request('/account', { method: 'DELETE' }, getToken),
   getQuests: (getToken) => request('/quests', {}, getToken),
   createQuest: (payload, getToken) => request('/quests', { method: 'POST', body: JSON.stringify(payload) }, getToken),
   startQuest: (id, getToken) => request(`/quests/${id}/start`, { method: 'POST' }, getToken),

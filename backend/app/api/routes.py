@@ -3,7 +3,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.auth import current_user
@@ -340,7 +340,7 @@ def search_friends(q: str = "", user: User = Depends(current_user), database: Se
 
 @router.get("/friends")
 def list_friends(user: User = Depends(current_user), database: Session = Depends(get_db)) -> list[dict[str, Any]]:
-    ids = _friend_ids(database, user.id)
+    ids = _friend_ids(database, user.id) - {user.id}
     friends = database.scalars(select(User).where(User.id.in_(ids)).order_by(User.experience.desc())).all() if ids else []
     return [{
         "id": item.id, "username": item.username, "displayName": item.display_name,
@@ -480,6 +480,23 @@ def public_profile(username: str, user: User = Depends(current_user), database: 
     return result
 
 
+@router.delete("/account")
+def delete_account(user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, str]:
+    database.execute(delete(QuestSession).where(QuestSession.user_id == user.id))
+    database.execute(delete(Quest).where(Quest.user_id == user.id))
+    database.execute(delete(Activity).where(Activity.user_id == user.id))
+    database.execute(delete(InventoryItem).where(InventoryItem.user_id == user.id))
+    database.execute(delete(Notification).where(Notification.user_id == user.id))
+    database.execute(delete(AIAction).where(AIAction.user_id == user.id))
+    database.execute(delete(UserPreference).where(UserPreference.user_id == user.id))
+    database.execute(delete(Friendship).where(
+        (Friendship.requester_id == user.id) | (Friendship.addressee_id == user.id)
+    ))
+    database.delete(user)
+    database.commit()
+    return {"status": "deleted"}
+
+
 @router.get("/notifications")
 def list_notifications(unread_only: bool = False, user: User = Depends(current_user), database: Session = Depends(get_db)) -> dict[str, Any]:
     query = select(Notification).where(Notification.user_id == user.id)
@@ -593,6 +610,23 @@ def ai_action(payload: AIActionRequest, user: User = Depends(current_user), data
         database.flush()
         result = {"action": payload.action, "status": "created", "quest": serialize_quest(quest),
                   "message": f"Created '{quest.title}' as a {quest.estimated_minutes}-minute quest."}
+        database.add(AIAction(user_id=user.id, action=payload.action, input=payload.input, result=result))
+        database.commit()
+        return result
+    if payload.action == "START_QUEST":
+        quest_id = payload.input.get("questId")
+        quest = database.scalar(select(Quest).where(Quest.id == quest_id, Quest.user_id == user.id))
+        if not quest:
+            raise HTTPException(status_code=404, detail="Quest not found")
+        active = database.scalar(select(Quest).where(Quest.user_id == user.id, Quest.status == "active", Quest.id != quest.id))
+        if active:
+            raise HTTPException(status_code=409, detail=f"Finish '{active.title}' before starting another quest.")
+        if quest.status != "planned":
+            raise HTTPException(status_code=409, detail="Only an available quest can be started.")
+        quest.status = "active"
+        quest.started_at = datetime.utcnow()
+        database.add(QuestSession(quest_id=quest.id, user_id=user.id, started_at=quest.started_at))
+        result = {"action": payload.action, "status": "started", "quest": serialize_quest(quest), "message": f"Started '{quest.title}'. Focus timer is running."}
         database.add(AIAction(user_id=user.id, action=payload.action, input=payload.input, result=result))
         database.commit()
         return result
