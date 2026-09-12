@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BadgeCheck, Lock, Medal, Sparkles, Trophy } from 'lucide-react';
-import { achievementCatalog } from '../data/mockData';
+import { achievementCatalog, expandedAchievementCatalog } from '../data/mockData';
 
 const categories = ['All', 'Medals', 'Quest achievements', 'Streaks', 'Milestones', 'Secret'];
 const rarityClasses = {
@@ -16,9 +16,10 @@ const rarityClasses = {
 export default function Achievements({ user }) {
   const [category, setCategory] = useState('All');
   const ownedIds = new Set((user.achievements || []).map((achievement) => achievement.id));
-  const visible = achievementCatalog.filter((achievement) => category === 'All' || achievement.category === category);
+  const catalog = [...achievementCatalog, ...expandedAchievementCatalog];
+  const visible = catalog.filter((achievement) => category === 'All' || achievement.category === category);
   return <div className="min-h-screen bg-ink"><div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
-    <header className="flex flex-col justify-between gap-5 border-b border-white/8 pb-8 sm:flex-row sm:items-end"><div><p className="eyebrow text-lime">Collection · medal case</p><h1 className="mt-2 font-display text-4xl font-extrabold">Earn your marks.</h1><p className="mt-2 max-w-xl text-sm leading-6 text-muted">Every medal records a way you showed up. Fill the case through quests, streaks, levels, and discoveries.</p></div><div className="flex items-center gap-3 text-xs text-muted"><Medal size={18} className="text-[#ffd27a]" /> {ownedIds.size} / {achievementCatalog.length} discovered</div></header>
+    <header className="flex flex-col justify-between gap-5 border-b border-white/8 pb-8 sm:flex-row sm:items-end"><div><p className="eyebrow text-lime">Collection · medal case</p><h1 className="mt-2 font-display text-4xl font-extrabold">Earn your marks.</h1><p className="mt-2 max-w-xl text-sm leading-6 text-muted">Every medal records a way you showed up. Fill the case through quests, streaks, levels, and discoveries.</p></div><div className="flex items-center gap-3 text-xs text-muted"><Medal size={18} className="text-[#ffd27a]" /> {ownedIds.size} / {catalog.length} discovered</div></header>
     <div className="mt-7 flex gap-2 overflow-x-auto pb-1">{categories.map((item) => <button key={item} onClick={() => setCategory(item)} className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition ${category === item ? 'border-lime/40 bg-lime/10 text-lime-soft' : 'border-white/10 bg-white/[.03] text-muted hover:bg-white/[.07]'}`}>{item}</button>)}</div>
     <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{visible.map((achievement, index) => <Achievement key={achievement.id} achievement={achievement} index={index} owned={ownedIds.has(achievement.id)} user={user} />)}</div>
   </div></div>;
