@@ -51,6 +51,29 @@ button { cursor: pointer; }
   .medal-emblem { position: relative; display: grid; height: 6.5rem; width: 6.5rem; place-items: center; border: 3px solid currentColor; border-radius: 42% 42% 50% 50%; background: linear-gradient(145deg, rgba(255,255,255,.28), rgba(0,0,0,.2)); box-shadow: inset 0 0 0 5px rgba(255,255,255,.08), 0 12px 28px rgba(0,0,0,.28); transform: rotate(45deg); }
   .medal-emblem svg { transform: rotate(-45deg); }
   .medal-emblem-locked { filter: grayscale(1); opacity: .5; }
+  .collection-relic { border-radius: 1rem 2rem 1rem 2rem; }
+  .collection-relic-quest-achievements { border-radius: 2rem .8rem 2rem .8rem; }
+  .collection-relic-streaks { border-radius: 50% 1rem 50% 1rem; }
+  .collection-relic-milestones { border-radius: .55rem 2rem .55rem 2rem; }
+  .collection-relic-secret { border-style: dashed; }
+  .medal-emblem-0 { border-radius: 42% 42% 50% 50%; }
+  .medal-emblem-1 { border-radius: 50%; transform: rotate(0deg); }
+  .medal-emblem-1 svg { transform: none; }
+  .medal-emblem-2 { border-radius: 20% 50% 20% 50%; transform: rotate(45deg); }
+  .medal-emblem-2 svg, .medal-emblem-2 .relic-engraving { transform: rotate(-45deg); }
+  .medal-emblem-3 { clip-path: polygon(50% 0, 100% 25%, 82% 100%, 18% 100%, 0 25%); border-radius: 0; transform: none; }
+  .medal-emblem-3 svg { transform: none; }
+  .medal-emblem-4 { border-radius: 12% 50% 12% 50%; transform: rotate(-12deg); }
+  .medal-emblem-4 svg, .medal-emblem-4 .relic-engraving { transform: rotate(12deg); }
+  .relic-engraving { position: absolute; right: .45rem; bottom: .35rem; font: .48rem 'DM Mono', monospace; opacity: .6; }
+  .equipped-artifact { position: relative; border-left: 2px solid currentColor; border-radius: 0 1rem 1rem 0; background: linear-gradient(100deg, rgba(200,241,105,.12), rgba(255,255,255,.025)); padding: .65rem .8rem; }
+  .equipped-artifact-glyph { display: grid; height: 3.5rem; width: 3.5rem; flex-shrink: 0; place-items: center; border: 1px solid currentColor; border-radius: 35% 50% 35% 50%; background: rgba(255,255,255,.07); color: inherit; }
+  .equipped-artifact-nameplate { color: #8fd9ff; }
+  .equipped-artifact-theme { color: #d4b6ff; border-radius: 1rem 0 1rem 0; }
+  .equipped-artifact-xp-effect { color: #ffd27a; }
+  .equipped-artifact-avatar-effect { color: #ffab91; }
+  .equipped-artifact-badge { color: #c8f169; }
+  .equipped-artifact-trophy-display { color: #ffd27a; }
   .artifact-frame { border: 4px solid #c8f169; border-radius: 36% 36% 48% 48%; box-shadow: inset 0 0 0 4px rgba(255,255,255,.16), 0 0 22px rgba(200,241,105,.28); }
   .artifact-frame-rare { border-radius: 50%; border-color: #8fd9ff; }
   .artifact-frame-epic { border-radius: 24% 50% 24% 50%; border-color: #d4b6ff; transform: rotate(45deg); }
