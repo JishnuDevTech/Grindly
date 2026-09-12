@@ -329,8 +329,12 @@ def search_friends(q: str = "", user: User = Depends(current_user), database: Se
 def list_friends(user: User = Depends(current_user), database: Session = Depends(get_db)) -> list[dict[str, Any]]:
     ids = _friend_ids(database, user.id)
     friends = database.scalars(select(User).where(User.id.in_(ids)).order_by(User.experience.desc())).all() if ids else []
-    return [{"id": item.id, "username": item.username, "displayName": item.display_name,
-             "avatar": item.avatar, "level": item.level, "xp": item.experience} for item in friends]
+    return [{
+        "id": item.id, "username": item.username, "displayName": item.display_name,
+        "avatar": item.avatar, "level": item.level, "xp": item.experience,
+        "streak": item.streak,
+        "completedQuests": database.scalar(select(func.count(Quest.id)).where(Quest.user_id == item.id, Quest.status == "completed")) or 0,
+    } for item in friends]
 
 
 @router.post("/friends/requests", status_code=status.HTTP_201_CREATED)
@@ -347,7 +351,7 @@ def send_friend_request(payload: FriendRequest, user: User = Depends(current_use
     if existing:
         if existing.status == "pending" and existing.addressee_id == user.id:
             existing.status = "accepted"
-            database.add(Notification(user_id=target.id, kind="friend", title="Friend request accepted", message=f"{user.display_name} accepted your request"))
+            database.add(Notification(user_id=target.id, kind="friend", title="Friend request accepted", message=f"{user.display_name} accepted your request", payload={"username": user.username}))
             database.commit()
             return {"status": "accepted"}
         raise HTTPException(status_code=409, detail="A relationship already exists")
@@ -423,6 +427,11 @@ def public_profile(username: str, user: User = Depends(current_user), database: 
     result = {"id": target.id, "username": target.username, "displayName": target.display_name, "avatar": target.avatar,
               "level": target.level, "streak": target.streak, "bestStreak": target.best_streak,
               "experience": target.experience, "joinedDate": target.created_at.date().isoformat(), "private": False}
+    relationship = _relationship(database, user.id, target.id)
+    result["relationship"] = "friends" if is_friend else (
+        relationship.status if relationship and relationship.requester_id == user.id else
+        "incoming" if relationship else "none"
+    )
     if values.get("show_email", False) and target.id == user.id:
         result["email"] = target.email
     if values.get("show_stats", True):
