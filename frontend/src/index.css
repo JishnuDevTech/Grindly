@@ -7,6 +7,7 @@
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
 body { margin: 0; background: #080b0d; color: #f5f7f2; font-family: 'Manrope', sans-serif; -webkit-font-smoothing: antialiased; }
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 
