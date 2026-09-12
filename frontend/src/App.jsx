@@ -22,6 +22,7 @@ export default function App() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState('');
+  const [dataReloadKey, setDataReloadKey] = useState(0);
   const [currentPage, setCurrentPage] = useState('home');
   const [user, setUser] = useState(null);
   const [quests, setQuests] = useState([]);
@@ -42,7 +43,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!firebaseUser) {
+    if (!firebaseUser || !firebaseAuth?.currentUser) {
       setUser(null);
       return;
     }
@@ -51,7 +52,7 @@ export default function App() {
       setLoadingData(true);
       setDataError('');
       try {
-        const token = () => firebaseUser.getIdToken();
+        const token = () => firebaseAuth.currentUser.getIdToken();
         const [me, nextQuests, nextLeaderboard, nextShop] = await Promise.all([api.getMe(token), api.getQuests(token), api.getLeaderboard(token), api.getShop(token)]);
         if (!cancelled) {
           setUser(me);
@@ -70,7 +71,7 @@ export default function App() {
     };
     load();
     return () => { cancelled = true; };
-  }, [firebaseUser]);
+  }, [firebaseUser, dataReloadKey]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -78,7 +79,13 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const token = () => firebaseUser.getIdToken();
+  const token = () => {
+    const currentUser = firebaseAuth?.currentUser;
+    if (!currentUser || typeof currentUser.getIdToken !== 'function') {
+      throw new Error('Your Firebase session is no longer valid. Please sign in again.');
+    }
+    return currentUser.getIdToken();
+  };
   const showToast = (message, tone = 'success') => setToast({ message, tone });
 
   const handleStartQuest = async (questId) => {
@@ -125,7 +132,7 @@ export default function App() {
   if (loadingAuth) return <LoadingScreen message="Connecting to Grindly..." />;
   if (!firebaseConfigured || !firebaseUser) return <Auth onAuthenticated={setFirebaseUser} />;
   if (loadingData) return <LoadingScreen message="Loading your progression..." />;
-  if (dataError || !user) return <DataErrorScreen message={dataError || 'Your profile could not be loaded.'} onRetry={() => setFirebaseUser({ ...firebaseUser })} onSignOut={() => signOut(firebaseAuth)} />;
+  if (dataError || !user) return <DataErrorScreen message={dataError || 'Your profile could not be loaded.'} onRetry={() => { setUser(null); setDataReloadKey((key) => key + 1); }} onSignOut={() => signOut(firebaseAuth)} />;
 
   const page = {
     home: <Home user={user} quests={quests} onStart={handleStartQuest} onComplete={handleCompleteQuest} onCreateQuest={handleCreateQuest} onOpenAssistant={() => setAssistantOpen(true)} />,
