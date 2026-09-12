@@ -21,6 +21,7 @@ export default function App() {
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
+  const [dataError, setDataError] = useState('');
   const [currentPage, setCurrentPage] = useState('home');
   const [user, setUser] = useState(null);
   const [quests, setQuests] = useState([]);
@@ -48,6 +49,7 @@ export default function App() {
     let cancelled = false;
     const load = async () => {
       setLoadingData(true);
+      setDataError('');
       try {
         const token = () => firebaseUser.getIdToken();
         const [me, nextQuests, nextLeaderboard, nextShop] = await Promise.all([api.getMe(token), api.getQuests(token), api.getLeaderboard(token), api.getShop(token)]);
@@ -58,7 +60,10 @@ export default function App() {
           setShopItems(nextShop);
         }
       } catch (error) {
-        if (!cancelled) setToast({ message: error.message, tone: 'warning' });
+        if (!cancelled) {
+          setDataError(error.message || 'Could not load your progression.');
+          setToast({ message: error.message, tone: 'warning' });
+        }
       } finally {
         if (!cancelled) setLoadingData(false);
       }
@@ -119,7 +124,8 @@ export default function App() {
 
   if (loadingAuth) return <LoadingScreen message="Connecting to Grindly..." />;
   if (!firebaseConfigured || !firebaseUser) return <Auth onAuthenticated={setFirebaseUser} />;
-  if (loadingData || !user) return <LoadingScreen message="Loading your progression..." />;
+  if (loadingData) return <LoadingScreen message="Loading your progression..." />;
+  if (dataError || !user) return <DataErrorScreen message={dataError || 'Your profile could not be loaded.'} onRetry={() => setFirebaseUser({ ...firebaseUser })} onSignOut={() => signOut(firebaseAuth)} />;
 
   const page = {
     home: <Home user={user} quests={quests} onStart={handleStartQuest} onComplete={handleCompleteQuest} onCreateQuest={handleCreateQuest} onOpenAssistant={() => setAssistantOpen(true)} />,
@@ -132,6 +138,8 @@ export default function App() {
 }
 
 function LoadingScreen({ message }) { return <div className="grid min-h-screen place-items-center bg-ink"><div className="text-center"><span className="brand-mark mx-auto">G</span><p className="mt-5 text-sm text-muted">{message}</p></div></div>; }
+
+function DataErrorScreen({ message, onRetry, onSignOut }) { return <div className="grid min-h-screen place-items-center bg-ink px-5"><div className="max-w-lg rounded-3xl border border-[#ff8060]/25 bg-panel p-8 text-center"><span className="brand-mark mx-auto">G</span><h1 className="mt-6 font-display text-3xl font-extrabold">We couldn’t load your progression.</h1><p className="mt-3 text-sm leading-7 text-muted">{message}</p><div className="mt-6 flex justify-center gap-3"><button onClick={onRetry} className="btn-primary">Try again</button><button onClick={onSignOut} className="btn-secondary">Sign out</button></div></div></div>; }
 
 function CompanionCard({ onOpen }) { return <div className="companion-card"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="status-dot" /><span className="eyebrow">Your companion</span></div><Sparkles size={16} className="text-lime" /></div><div className="mt-8 flex items-center gap-3"><div className="bot-orb"><Bot size={22} /></div><div><p className="font-display text-lg font-semibold">Grindly</p><p className="text-xs text-muted">Focus coach · always on</p></div></div><p className="mt-6 text-sm leading-6 text-slate-300">Turn the thing you’re avoiding into a quest. I’ll help you make it clear, doable, and worth showing up for.</p><button onClick={onOpen} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-lime px-4 py-3 text-sm font-bold text-ink transition hover:bg-lime-soft"><MessageCircle size={16} /> Talk to Grindly</button></div>; }
 

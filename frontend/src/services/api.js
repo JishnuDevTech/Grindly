@@ -1,6 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '');
 
 async function request(path, options = {}, getToken) {
+  if (!API_URL) {
+    throw new Error('VITE_API_URL is missing. Set it to your deployed FastAPI URL ending in /api.');
+  }
   const token = getToken ? await getToken() : null;
   const response = await fetch(`${API_URL}${path}`, {
     ...options,

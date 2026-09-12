@@ -27,6 +27,28 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+*.env
+*.env.*
+!.env.example
+!frontend/.env.example
+!backend/.env.example
+
+# Credentials and private keys
+firebase-service-account*.json
+service-account*.json
+*-firebase-adminsdk-*.json
+*.pem
+*.key
+*.p12
+credentials.json
+secrets.json
+
+# Deployment and local tooling
+.vercel/
+.turbo/
+coverage/
+
+# Local databases and Python caches
 *.db
 __pycache__/
 *.py[cod]
