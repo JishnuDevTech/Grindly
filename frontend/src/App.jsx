@@ -17,6 +17,7 @@ import Achievements from './pages/Achievements';
 import { GrindlyCharacter } from './components/GrindlyCharacter';
 import { Avatar } from './components/Avatar';
 import { shopCatalog } from './data/mockData';
+import { playCoinCollection, playNotification, playXpCollection } from './services/sound';
 
 const navItems = [
   { id: 'home', label: 'Today', icon: HomeIcon },
@@ -152,6 +153,8 @@ export default function App() {
       const result = await api.completeQuest(questId, token);
       setQuests((current) => current.map((quest) => quest.id === questId ? result.quest : quest));
       setUser(result.user);
+      playXpCollection();
+      playCoinCollection();
       showToast(result.reward.levelUp
         ? `Level ${result.reward.newLevel} reached! +${result.reward.xp} XP · +${result.reward.coins} coins.`
         : `Quest cleared. +${result.reward.xp} XP · +${result.reward.coins} coins.`);
@@ -296,5 +299,5 @@ function CompanionPanel({ onClose, context, onAction }) {
 function Toast({ toast }) { return <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className={`fixed bottom-20 right-5 z-[60] max-w-sm rounded-2xl border px-4 py-3 text-sm font-medium shadow-2xl lg:bottom-6 ${toast.tone === 'warning' ? 'border-amber-400/30 bg-amber-400/10 text-amber-100' : 'border-lime/30 bg-[#172117] text-lime-soft'}`}>{toast.message}</motion.div>; }
 function NotificationCenter({ notifications, onRead, onReadAll }) {
   const [open, setOpen] = useState(false);
-  return <div className="fixed right-5 top-5 z-40"><button onClick={() => setOpen((current) => !current)} className="relative grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-panel/90 text-muted shadow-xl backdrop-blur hover:text-white" aria-label="Open notifications"><Bell size={18} />{notifications.unreadCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-lime px-1 text-[.6rem] font-extrabold text-ink">{notifications.unreadCount}</span>}</button>{open && <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border border-white/10 bg-panel shadow-2xl"><div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><p className="font-display font-bold">Notifications</p><button onClick={onReadAll} className="text-[.65rem] text-lime-soft">Mark all read</button></div><div className="max-h-80 overflow-y-auto">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} onClick={() => onRead(item.id)} className={`block w-full border-b border-white/5 px-4 py-3 text-left ${item.read ? 'opacity-60' : 'bg-lime/5'}`}><p className="text-sm font-bold">{item.title}</p><p className="mt-1 text-xs leading-5 text-muted">{item.message}</p><p className="mt-1 text-[.6rem] text-muted">{new Date(item.createdAt).toLocaleString()}</p></button>) : <p className="p-5 text-sm text-muted">No notifications yet.</p>}</div></div>}</div>;
+  return <div className="fixed right-5 top-5 z-40"><button onClick={() => { playNotification(); setOpen((current) => !current); }} className="relative grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-panel/90 text-muted shadow-xl backdrop-blur hover:text-white" aria-label="Open notifications"><Bell size={18} />{notifications.unreadCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-lime px-1 text-[.6rem] font-extrabold text-ink">{notifications.unreadCount}</span>}</button>{open && <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border border-white/10 bg-panel shadow-2xl"><div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><p className="font-display font-bold">Notifications</p><button onClick={onReadAll} className="text-[.65rem] text-lime-soft">Mark all read</button></div><div className="max-h-80 overflow-y-auto">{notifications.items.length ? notifications.items.map((item) => <button key={item.id} onClick={() => onRead(item.id)} className={`block w-full border-b border-white/5 px-4 py-3 text-left ${item.read ? 'opacity-60' : 'bg-lime/5'}`}><p className="text-sm font-bold">{item.title}</p><p className="mt-1 text-xs leading-5 text-muted">{item.message}</p><p className="mt-1 text-[.6rem] text-muted">{new Date(item.createdAt).toLocaleString()}</p></button>) : <p className="p-5 text-sm text-muted">No notifications yet.</p>}</div></div>}</div>;
 }
