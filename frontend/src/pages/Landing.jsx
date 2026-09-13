@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Crown, Flame, Gamepad2, LockKeyhole, Sparkles, Swords, Target, Trophy, Zap } from 'lucide-react';
+import { ArrowRight, Check, Crown, Crosshair, Flame, Gamepad2, LockKeyhole, Radio, Shield, Sparkles, Swords, Target, Trophy, Zap } from 'lucide-react';
 import { GrindlyCharacter } from '../components/GrindlyCharacter';
 
 const pillars = [
@@ -6,10 +6,12 @@ const pillars = [
   { icon: Zap, title: 'Earn visible momentum', detail: 'Every honest focus session feeds your XP, streak, level, and rank.' },
   { icon: Trophy, title: 'Build your own legend', detail: 'Collect achievements and make consistency feel like progress you can see.' },
 ];
+const particles = Array.from({ length: 14 }, (_, index) => ({ id: index, left: `${8 + ((index * 37) % 84)}%`, top: `${10 + ((index * 53) % 78)}%`, delay: `${(index % 5) * -.7}s` }));
 
 export default function Landing({ onEnter }) {
   return <div className="landing-page min-h-screen overflow-hidden bg-ink text-white">
     <div className="landing-grid" />
+    <div className="landing-particles" aria-hidden="true">{particles.map((particle) => <span key={particle.id} style={{ left: particle.left, top: particle.top, animationDelay: particle.delay }} />)}</div>
     <div className="landing-glow landing-glow-one" />
     <div className="landing-glow landing-glow-two" />
     <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
@@ -19,8 +21,9 @@ export default function Landing({ onEnter }) {
 
     <main className="relative z-10 mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 sm:pt-14 lg:px-12 lg:pb-24 lg:pt-20">
       <section className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-20">
-        <div className="max-w-3xl">
-          <div className="landing-kicker"><Swords size={14} /> Productivity for people who want a story</div>
+        <div className="landing-hero-copy max-w-3xl">
+          <div className="landing-kicker"><Gamepad2 size={14} /> Player one, your story starts here</div>
+          <div className="landing-hero-hud"><span><small>RUN</small> 001</span><span><small>XP</small> 000</span><span><small>CLASS</small> INITIATE</span><span className="landing-hero-hud-signal"><Radio size={12} /> ONLINE</span></div>
           <h1 className="mt-6 max-w-3xl font-display text-5xl font-extrabold leading-[.98] tracking-tight sm:text-6xl lg:text-8xl">Make your real life feel <span className="landing-gradient-text">playable.</span></h1>
           <p className="mt-7 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">Grindly turns meaningful work into a personal campaign. Choose one quest, protect your focus, and watch small wins become a character arc.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row"><button onClick={onEnter} className="btn-primary flex items-center justify-center gap-2 !rounded-xl !px-5 !py-3.5"><Sparkles size={17} /> Start your campaign <ArrowRight size={16} /></button><a href="#how-it-works" className="btn-secondary flex items-center justify-center gap-2 !rounded-xl !px-5 !py-3.5">See how it works</a></div>
@@ -28,12 +31,16 @@ export default function Landing({ onEnter }) {
         </div>
 
         <div className="landing-character-stage">
+          <div className="landing-stage-corner landing-stage-corner-top"><Radio size={13} /> LIVE SESSION</div>
+          <div className="landing-stage-corner landing-stage-corner-bottom">SYNCED <span>///</span> 001</div>
           <div className="landing-orbit landing-orbit-one" /><div className="landing-orbit landing-orbit-two" />
           <div className="landing-scanline" />
           <div className="landing-character-label"><span className="status-dot" /><span className="eyebrow text-lime">Companion online</span></div>
           <GrindlyCharacter mood="happy" size="lg" />
+          <div className="landing-crosshair"><Crosshair size={22} /><span>READY</span></div>
           <div className="landing-level-badge"><Crown size={15} className="text-[#ffd27a]" /><span><strong>LEVEL 01</strong><small>Begin anywhere</small></span></div>
           <div className="landing-streak-badge"><Flame size={15} className="text-[#ff896d]" /><span><strong>0 → 1</strong><small>Today is the start</small></span></div>
+          <div className="landing-shield-badge"><Shield size={14} /><span>FOCUS SHIELD<br /><strong>CHARGED</strong></span></div>
         </div>
       </section>
 
