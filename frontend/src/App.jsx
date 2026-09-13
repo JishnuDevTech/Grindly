@@ -5,6 +5,7 @@ import { deleteUser, onAuthStateChanged, signOut } from 'firebase/auth';
 import { firebaseAuth, firebaseConfigured } from './services/firebase';
 import { api } from './services/api';
 import Auth from './pages/Auth';
+import Landing from './pages/Landing';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Shop from './pages/Shop';
@@ -34,6 +35,7 @@ export default function App() {
   const [dataError, setDataError] = useState('');
   const [dataReloadKey, setDataReloadKey] = useState(0);
   const [currentPage, setCurrentPage] = useState('home');
+  const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState(null);
   const [quests, setQuests] = useState([]);
   const [shopItems, setShopItems] = useState([]);
@@ -217,7 +219,9 @@ export default function App() {
   };
 
   if (loadingAuth) return <LoadingScreen message="Connecting to Grindly..." />;
-  if (!firebaseConfigured || !firebaseUser) return <Auth onAuthenticated={setFirebaseUser} />;
+  if (!firebaseUser) return showAuth
+    ? <Auth onAuthenticated={setFirebaseUser} onBack={() => setShowAuth(false)} />
+    : <Landing onEnter={() => setShowAuth(true)} />;
   if (loadingData) return <LoadingScreen message="Loading your progression..." />;
   if (dataError || !user) return <DataErrorScreen message={dataError || 'Your profile could not be loaded.'} onRetry={() => { setUser(null); setDataReloadKey((key) => key + 1); }} onSignOut={() => signOut(firebaseAuth)} />;
   if (!user.onboardingCompleted) return <Onboarding user={user} onComplete={handleOnboardingComplete} />;

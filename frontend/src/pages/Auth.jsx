@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Github, Mail, Phone, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, Github, Mail, Phone, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   createUserWithEmailAndPassword,
   RecaptchaVerifier,
@@ -19,7 +19,7 @@ const countries = [
   { code: '+65', name: 'Singapore', flag: '🇸🇬' },
 ];
 
-export default function Auth({ onAuthenticated }) {
+export default function Auth({ onAuthenticated, onBack }) {
   const [mode, setMode] = useState('signin');
   const [method, setMethod] = useState('email');
   const [email, setEmail] = useState('');
