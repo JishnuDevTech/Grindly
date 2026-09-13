@@ -282,4 +282,54 @@ canvas {
   .vault-inspect-copy { padding: 1.25rem; }
 }
 
+.medals-page { position: relative; isolation: isolate; background: radial-gradient(circle at 78% 0%, rgba(110,77,28,.16), transparent 30%), #080b0d; }
+.medals-page::before { position: fixed; inset: 0; z-index: -1; opacity: .14; background-image: linear-gradient(rgba(255,210,122,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,210,122,.08) 1px, transparent 1px); background-size: 4rem 4rem; content: ''; mask-image: linear-gradient(to bottom, black, transparent 80%); }
+.medals-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; border-bottom: 1px solid rgba(255,255,255,.1); padding-bottom: 2rem; }
+.medals-score { display: flex; min-width: 13rem; align-items: center; gap: .8rem; border: 1px solid rgba(255,210,122,.28); border-radius: 1.1rem; background: linear-gradient(135deg, rgba(255,210,122,.12), rgba(255,255,255,.03)); padding: .8rem 1rem; }
+.medals-score-icon { display: grid; height: 2.6rem; width: 2.6rem; place-items: center; border: 1px solid rgba(255,210,122,.45); border-radius: .8rem; background: rgba(255,210,122,.12); color: #ffd27a; }
+.chess-rank-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .6rem; margin-top: 1.5rem; border: 1px solid rgba(255,255,255,.1); border-radius: 1.1rem; background: rgba(255,255,255,.025); padding: .65rem; }
+.chess-rank-piece { display: flex; align-items: center; gap: .55rem; border-right: 1px solid rgba(255,255,255,.08); padding: .45rem .6rem; }
+.chess-rank-piece:last-child { border-right: 0; }
+.rank-chess-glyph { color: #ffd27a; font-family: Georgia, serif; font-size: 1.85rem; line-height: 1; text-shadow: 0 0 16px rgba(255,210,122,.3); }
+.chess-rank-piece span:last-child { display: grid; gap: .12rem; }
+.chess-rank-piece strong { color: #dce3dc; font: .57rem 'DM Mono', monospace; letter-spacing: .08em; }
+.chess-rank-piece small { color: #68736c; font-size: .62rem; }
+.achievement-chess-card { cursor: pointer; box-shadow: inset 0 1px rgba(255,255,255,.06); transition: box-shadow .25s ease, transform .25s ease; }
+.achievement-chess-card:hover { box-shadow: inset 0 1px rgba(255,255,255,.14), 0 18px 40px rgba(0,0,0,.28); }
+.chess-board-glow { position: absolute; height: 11rem; width: 11rem; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; box-shadow: 0 0 0 1.5rem rgba(255,255,255,.025), 0 0 0 3rem rgba(255,255,255,.018); transform: rotate(45deg); }
+.chess-board-glow::after { position: absolute; inset: 1.5rem; border: 1px dashed rgba(255,255,255,.14); border-radius: 18%; content: ''; }
+.chess-piece { position: relative; z-index: 1; color: currentColor; font-family: Georgia, serif; font-size: 5.5rem; line-height: 1; filter: drop-shadow(0 12px 10px rgba(0,0,0,.45)); }
+.chess-emblem { display: grid; height: 8rem; width: 8rem; border-radius: 1.4rem; transform: rotate(0deg); }
+.chess-emblem .relic-engraving { z-index: 2; }
+.chess-emblem-king { border-radius: 50%; border-width: 4px; box-shadow: 0 0 0 5px rgba(240,171,252,.12), 0 0 42px rgba(217,70,239,.4); }
+.chess-emblem-queen { border-radius: 28% 50% 28% 50%; transform: rotate(45deg); }
+.chess-emblem-queen .chess-piece, .chess-emblem-queen .relic-engraving { transform: rotate(-45deg); }
+.chess-emblem-rook { border-radius: .8rem; border-style: double; border-width: 5px; }
+.chess-emblem-bishop { border-radius: 50% 18% 50% 18%; transform: rotate(12deg); }
+.chess-emblem-bishop .chess-piece, .chess-emblem-bishop .relic-engraving { transform: rotate(-12deg); }
+.chess-emblem-knight { border-radius: 50% 20% 50% 20%; border-width: 4px; }
+.chess-emblem-pawn { border-radius: 50% 50% 35% 35%; }
+.chess-piece-mini { color: #ffd27a; font-family: Georgia, serif; font-size: 1.3rem; line-height: 1; }
+.achievement-role { position: absolute; right: .75rem; top: .75rem; display: grid; gap: .1rem; text-align: right; }
+.achievement-role span { color: rgba(255,255,255,.7); font: .55rem 'DM Mono', monospace; letter-spacing: .12em; }
+.achievement-role small { color: rgba(255,255,255,.45); font-size: .58rem; }
+.rpg-roadmap { margin-top: 3rem; border-top: 1px solid rgba(255,255,255,.1); padding-top: 2rem; }
+.rpg-roadmap-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-top: 1.25rem; }
+.rpg-roadmap-grid article { display: flex; align-items: flex-start; gap: .7rem; border: 1px solid rgba(200,241,105,.18); border-radius: 1rem; background: linear-gradient(135deg, rgba(200,241,105,.08), rgba(255,255,255,.025)); padding: 1rem; }
+.rpg-roadmap-icon { display: grid; height: 2.25rem; width: 2.25rem; flex-shrink: 0; place-items: center; border: 1px solid rgba(200,241,105,.3); border-radius: .7rem; background: rgba(200,241,105,.1); color: #c8f169; }
+
+@media (max-width: 900px) {
+  .chess-rank-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chess-rank-piece:nth-child(3) { border-right: 0; }
+  .rpg-roadmap-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 639px) {
+  .medals-header { align-items: stretch; flex-direction: column; }
+  .medals-score { min-width: 0; }
+  .chess-rank-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chess-rank-piece:nth-child(2n) { border-right: 0; }
+  .chess-rank-piece { padding-inline: .35rem; }
+}
+
 @keyframes landing-avatar-float-small { 50% { transform: scale(1.25) translateY(-6px); } }
