@@ -168,6 +168,11 @@ canvas {
 .landing-hero-hud small { color: #68736c; font-size: .52rem; }
 .landing-hero-hud-signal { color: #c8f169 !important; }
 .landing-hero-hud-signal svg { animation: landing-signal-blink 1.6s ease-in-out infinite; }
+.landing-mini-player { display: flex; width: fit-content; align-items: center; gap: .5rem; margin-top: .8rem; border: 1px solid rgba(200,241,105,.3); border-radius: 1rem; background: rgba(8,11,13,.72); padding: .35rem .65rem .35rem .35rem; color: #c8f169; backdrop-filter: blur(12px); animation: landing-mini-enter .8s .4s both; }
+.landing-mini-player .grindly-character { flex-shrink: 0; transform: scale(.68); }
+.landing-mini-player span { display: grid; gap: .15rem; }
+.landing-mini-player strong { font: .55rem 'DM Mono', monospace; letter-spacing: .1em; }
+.landing-mini-player small { color: #87918a; font: .44rem 'DM Mono', monospace; letter-spacing: .08em; }
 .landing-gradient-text { background: linear-gradient(105deg, #c8f169, #e6f9b8 55%, #ffab91); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .landing-character-stage { position: relative; display: grid; min-height: 28rem; place-items: center; overflow: hidden; border: 1px solid rgba(200,241,105,.2); border-radius: 2rem; background: linear-gradient(145deg, rgba(28,42,31,.94), rgba(13,20,20,.94)); box-shadow: inset 0 1px rgba(255,255,255,.08), 0 30px 80px rgba(0,0,0,.25); animation: landing-stage-enter 1s .15s cubic-bezier(.2,.8,.2,1) both; }
 .landing-character-stage::after { position: absolute; bottom: 13%; height: 5rem; width: 16rem; border-radius: 50%; background: rgba(200,241,105,.22); filter: blur(26px); content: ''; }
@@ -178,6 +183,13 @@ canvas {
 .landing-stage-corner-top { right: 1.2rem; top: 1.2rem; }
 .landing-stage-corner-bottom { bottom: 1.2rem; right: 1.2rem; }
 .landing-stage-corner-bottom span { color: #ff896d; }
+.landing-arena-meter { position: absolute; z-index: 3; display: grid; gap: .35rem; color: #87918a; font: .48rem 'DM Mono', monospace; letter-spacing: .1em; }
+.landing-arena-meter i { display: block; height: .25rem; width: 6rem; overflow: hidden; border: 1px solid rgba(200,241,105,.3); background: rgba(255,255,255,.06); }
+.landing-arena-meter b { display: block; height: 100%; width: 78%; background: #c8f169; box-shadow: 0 0 10px rgba(200,241,105,.8); animation: landing-meter-pulse 2.4s ease-in-out infinite; }
+.landing-arena-meter-top { left: 1.2rem; top: 4rem; }
+.landing-arena-meter-left { bottom: 1.2rem; left: 1.2rem; transform: rotate(-90deg); transform-origin: left bottom; }
+.landing-arena-meter-left i { width: 4.5rem; }
+.landing-arena-meter-left b { width: 62%; background: #8fd9ff; box-shadow: 0 0 10px rgba(143,217,255,.8); }
 .landing-orbit { position: absolute; border: 1px solid rgba(200,241,105,.18); border-radius: 50%; transform: rotate(-18deg); }
 .landing-orbit-one { height: 18rem; width: 28rem; }
 .landing-orbit-two { height: 25rem; width: 35rem; border-color: rgba(255,137,109,.12); transform: rotate(28deg); }
@@ -206,6 +218,7 @@ canvas {
 @keyframes landing-particle-drift { 50% { opacity: .25; transform: translate(8px, -14px) scale(1.8); } }
 @keyframes landing-crosshair-pulse { 50% { opacity: .35; transform: scale(1.18); } }
 @keyframes landing-signal-blink { 50% { opacity: .35; } }
+@keyframes landing-meter-pulse { 50% { width: 88%; opacity: .65; } }
 
 .landing-page .btn-primary { box-shadow: 0 0 0 1px rgba(200,241,105,.35), 0 0 24px rgba(200,241,105,.18); }
 .landing-page .btn-primary:hover { box-shadow: 0 0 0 1px rgba(230,249,184,.75), 0 0 34px rgba(200,241,105,.35); }
@@ -225,5 +238,13 @@ canvas {
   .landing-pillar > div:last-child { grid-column: 2; }
   .dashboard-campaign-panel { grid-template-columns: 1fr; }
 }
+
+@media (min-width: 480px) and (max-width: 1023px) {
+  .landing-hero-copy { position: relative; }
+  .landing-mini-player { position: absolute; top: 10.5rem; right: 1rem; z-index: 2; margin-top: 0; padding: .45rem .7rem .45rem .4rem; }
+  .landing-mini-player .grindly-character { transform: scale(.9); }
+}
+
+@keyframes landing-mini-enter { from { opacity: 0; transform: translateY(10px) scale(.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @keyframes landing-avatar-float-small { 50% { transform: scale(1.25) translateY(-6px); } }

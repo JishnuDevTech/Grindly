@@ -20,11 +20,12 @@ export default function Landing({ onEnter }) {
     </header>
 
     <main className="relative z-10 mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 sm:pt-14 lg:px-12 lg:pb-24 lg:pt-20">
-      <section className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-20">
+      <section className="grid items-center gap-8 md:grid-cols-[minmax(0,1fr)_330px] lg:gap-16">
         <div className="landing-hero-copy max-w-3xl">
           <div className="landing-kicker"><Gamepad2 size={14} /> Player one, your story starts here</div>
           <div className="landing-hero-hud"><span><small>RUN</small> 001</span><span><small>XP</small> 000</span><span><small>CLASS</small> INITIATE</span><span className="landing-hero-hud-signal"><Radio size={12} /> ONLINE</span></div>
-          <h1 className="mt-6 max-w-3xl font-display text-5xl font-extrabold leading-[.98] tracking-tight sm:text-6xl lg:text-8xl">Make your real life feel <span className="landing-gradient-text">playable.</span></h1>
+          <div className="landing-mini-player" aria-hidden="true"><GrindlyCharacter mood="happy" size="md" /><span><strong>GRINDLY</strong><small>COMPANION ONLINE</small></span></div>
+          <h1 className="mt-6 max-w-3xl font-display text-5xl font-extrabold leading-[.98] tracking-tight sm:text-6xl lg:text-7xl">Make your real life feel <span className="landing-gradient-text">playable.</span></h1>
           <p className="mt-7 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">Grindly turns meaningful work into a personal campaign. Choose one quest, protect your focus, and watch small wins become a character arc.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row"><button onClick={onEnter} className="btn-primary flex items-center justify-center gap-2 !rounded-xl !px-5 !py-3.5"><Sparkles size={17} /> Start your campaign <ArrowRight size={16} /></button><a href="#how-it-works" className="btn-secondary flex items-center justify-center gap-2 !rounded-xl !px-5 !py-3.5">See how it works</a></div>
           <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted"><span className="flex items-center gap-2"><Check size={14} className="text-lime" /> One focused quest at a time</span><span className="flex items-center gap-2"><Check size={14} className="text-lime" /> Server-validated rewards</span></div>
@@ -35,6 +36,8 @@ export default function Landing({ onEnter }) {
           <div className="landing-stage-corner landing-stage-corner-bottom">SYNCED <span>///</span> 001</div>
           <div className="landing-orbit landing-orbit-one" /><div className="landing-orbit landing-orbit-two" />
           <div className="landing-scanline" />
+          <div className="landing-arena-meter landing-arena-meter-top"><span>MISSION READINESS</span><i><b /></i></div>
+          <div className="landing-arena-meter landing-arena-meter-left"><span>ENERGY</span><i><b /></i></div>
           <div className="landing-character-label"><span className="status-dot" /><span className="eyebrow text-lime">Companion online</span></div>
           <GrindlyCharacter mood="happy" size="lg" />
           <div className="landing-crosshair"><Crosshair size={22} /><span>READY</span></div>
